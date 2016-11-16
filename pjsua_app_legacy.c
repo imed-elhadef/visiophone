@@ -124,26 +124,12 @@ static void ui_input_url(const char *title, char *buf, pj_size_t len,
     result->uri_result = NULL;
 
     print_buddy_list();
-
-    printf("Choices:\n"
-	   "   0         For current dialog.\n"
-	   "  -1         All %d buddies in buddy list\n"
-	   "  [1 -%2d]    Select from buddy list\n"
-	   "  URL        An URL\n"
-	   "  <Enter>    Empty input (or 'q') to cancel\n"
-	   , pjsua_get_buddy_count(), pjsua_get_buddy_count());
-    printf("%s: ", title);
+     
+     printf("%s: ", title);
+    
+     
+    strcpy(buf,"sip:192.168.1.123");
    
-   //----------------Imed Modif----------------//
-   /* fflush(stdout);
-    if (fgets(buf, (int)len, stdin) == NULL)
-	return;*/ //Imed Masq
-        
-   //    printf("%s\n",sip_client_id[index_client]);
-    //   strcpy(buf,sip_client_id[index_client]); //Imed
-        strcpy(buf,"sip:iphone@192.168.1.86");
-     //-------------End Imed Modif----------------/
-
     len = strlen(buf);
 
     /* Left trim */
@@ -303,14 +289,13 @@ void legacy_main()
        }
  
      polling_config_value();*/
-     printf("You are in loop function\n");
      switch(call_status)
      {
         case end_call:
         call_status=idle;
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED
-        sleep(2); 
+        sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
 
@@ -318,7 +303,7 @@ void legacy_main()
         call_status=idle;
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED 
-        sleep(2);
+        sleep(3);
         system("aplay -q /home/pi/No_response.wav");
         break;
 
@@ -331,7 +316,7 @@ void legacy_main()
         call_status=idle;
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED 
-        sleep(2);
+        sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
          
         default:
@@ -343,7 +328,7 @@ void legacy_main()
 
        { 
        printf("Test Button\n");
-       system("aplay -q /home/pi/Appel_en_cours.wav");
+       //system("aplay -q /home/pi/Appel_en_cours.wav");
        ui_make_new_call();
        press=1;
        buf_Poll[0]=49;
