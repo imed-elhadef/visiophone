@@ -17,8 +17,9 @@ Type_call call=None;
 int press=0;
 int client_number=0;//Nombre des destinataires à appeler
 static int badge_number=0;//Nombre des badges dans la base de données
-bool config_visiophone=FALSE;//Mode normale par défaut 0
-bool door_status=FALSE;//Bouton porte par défaut 0
+bool config_visiophone=FALSE;//L'interphone fonctionne par défaut en "Mode Normale" --> Mode Normale=0 Mode Config=1
+bool open_door=FALSE;//Par défaut la porte est fermée
+bool rtsp_pi=FALSE;//Par défaut le serveur mjpg_streamer de la camera Rpi2 ne fonctionne plus
 const char *server = "localhost";
 const char *user = "root";
 const char *password = "arcangel";         /* set me first */
@@ -446,10 +447,15 @@ void polling_config_value(void)
      row = mysql_fetch_row(res);        
      printf("%d\n",atoi(row[3]));
      printf("%d\n",atoi(row[9]));
+     printf("%d\n",atoi(row[10]));//Ajouter un nouveau champ pour la camera rtsp
      if(atoi(row[3]))
      config_visiophone=TRUE; 
      if(atoi(row[9]))
-     door_status=TRUE;        
+     open_door=TRUE;
+     if(atoi(row[10]))
+     rtsp_pi=TRUE;
+     else
+     rtsp_pi=FALSE;        
      free(Querry);   
    //Disconnect from Data Base
      mysql_free_result(res);

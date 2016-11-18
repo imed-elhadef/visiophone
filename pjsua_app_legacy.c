@@ -30,7 +30,8 @@ int index_client=0;
 extern int client_number;
 extern int press;
 extern bool config_visiophone;
-extern bool door_status;
+extern bool open_door;
+extern bool rtsp_pi;
 //-------------------Mysql Data---------------//
 extern const char *server;
 extern const char *user;
@@ -222,16 +223,12 @@ static void ui_make_new_call()
 }
 
 
-
-
-
 /*
  * Main "user interface" loop.
  */
 void legacy_main()
 {
  int row_nbr =0;
- bool rtsp_pi=FALSE;
   //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
   //-----------Destroy RTSP Server process if running---------------//
@@ -258,21 +255,19 @@ void legacy_main()
     for (;;) 
     {
      Polling_Button();
-    /* polling_normal_nfc();
+     polling_normal_nfc();
+     polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi)
 
-     while (config_visiophone)
+     while (config_visiophone) //Check the config mode variable
       {
        config_visiophone=FALSE; //--> Reboot will make it FALSE
        polling_config_nfc();     
        }
 
-      while (door_status)
+      while (open_door) //Check the open door variable
       {
-       door_status=FALSE;
-           
-       //Ecriture dans la base de données
-           
-       //if (mysql_query(conn, "UPDATE parametre_visio SET ouvrir_porte_visio = '0'")) 
+       open_door=FALSE;           
+       //Ecriture dans la base de données 
       char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
       sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
       if (mysql_query(conn, Querry))
@@ -280,15 +275,33 @@ void legacy_main()
        fprintf(stderr, "%s\n", mysql_error(conn));
       } 
        //---------------Fin Ecriture-----------------//
-
-       printf("You have to open the door!!!\n");
+       printf("Opening the door!!!\n");
        strcpy(buffer_send,"PO");// "PO" Ouverture de la porte (A voir la trame par la suite)
        send_uart_data(buffer_send,sizeof(buffer_send));
        free(Querry);//You have to free the allocated memory 
        Querry=0;    
        }
+     
+      if (rtsp_pi) //Check the mjpg rpi server variable
+      {
+       rtsp_pi=FALSE;           
+       //Ecriture dans la base de données 
+      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
+      sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",prefix);
+      if (mysql_query(conn, Querry))
+     {
+       fprintf(stderr, "%s\n", mysql_error(conn));
+      } 
+       //---------------Fin Ecriture-----------------//
+       printf("Activating the mjpg_streamer!!!\n");
+       system("/etc/init.d/mjpg-streamer.sh");
+       free(Querry);//You have to free the allocated memory 
+       Querry=0;    
+       }
+     else
+      system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
  
-     polling_config_value();*/
+     
      switch(call_status)
      {
         case end_call:
@@ -334,17 +347,9 @@ void legacy_main()
        buf_Poll[0]=49;
        }
      
-    /* porte_ouverte();
-     sleep(2);
-     porte_fermee();
-     sleep(2);
-     porte_forcee();
-     sleep(2);*/
-
    /*  while ((buf_Poll[0]==48)&&(!press))
        {
-        system("sudo pkill mjpg_streamer");
-        //system("sudo pkill app"); //RTSP server
+        
         press=1;
   
         //Enregistrement des appels dans la base de données
