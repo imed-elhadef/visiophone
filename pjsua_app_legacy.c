@@ -29,8 +29,8 @@ extern Type_call call;
 int index_client=0;
 extern int client_number;
 extern int press;
-extern char config_visiophone;
-extern char door_status;
+extern bool config_visiophone;
+extern bool door_status;
 //-------------------Mysql Data---------------//
 extern const char *server;
 extern const char *user;
@@ -50,7 +50,6 @@ extern int result ;
 extern char buffer_send[2];
 //----------------Divers-----------------------//
 extern t_call_status call_status;
-char init=FALSE;
 
 
 #define THIS_FILE	"pjsua_app_legacy.c"
@@ -232,14 +231,15 @@ static void ui_make_new_call()
 void legacy_main()
 {
  int row_nbr =0;
+ bool rtsp_pi=FALSE;
   //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
-  //-----------Init RTSP Server---------------//
-  init=TRUE;
+  //-----------Destroy RTSP Server process if running---------------//
+  system("sudo pkill mjpg_streamer");
  //---------------Init Button------------//        
- Unexport_Polling_Button();
- sleep(1);//You should add it for RPI
- Init_Polling_Button();
+  Unexport_Polling_Button();
+  sleep(1);//You should add it for RPI
+  Init_Polling_Button();
 //----------------Init XBee Module------------------------//
  if (init_uart_port()== 0)
 	{
