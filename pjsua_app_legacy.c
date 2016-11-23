@@ -22,7 +22,8 @@
 
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_common.h"
-#include "visiophone.h" //Imed
+#include "visiophone.h"
+#include "MCP9808.h" 
 
 //------------Imed Variables--------------//
 extern Type_call call;
@@ -49,6 +50,9 @@ extern nfc_target nt;
 extern int result ;
 //----------------ZigBee Data-----------------//
 extern char buffer_send[2];
+//--------------mcp9808 Temp Sensor Data--------//
+const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
+struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 extern t_call_status call_status;
 
@@ -228,6 +232,7 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
+ float temperature;//Ambient temperature 
  int row_nbr =0;
   //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
@@ -242,6 +247,9 @@ void legacy_main()
 	{
         perror("Unable to initilize UART XBee");
 	}
+//---------------Init mcp9808 Temp Sensor-------------------//
+  while (mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor));
+  printf ("Device checked with sucess!!!\n");
 //-------------------MySQL Read Data Base-------------------//
 /* read_visio_account();
  if (read_from_data_base() == 0)
@@ -281,7 +289,7 @@ void legacy_main()
        free(Querry);//You have to free the allocated memory 
        Querry=0;    
        }
-     
+      
       if (rtsp_pi) //Check the mjpg rpi server variable
        {
        printf("Activating the mjpg_streamer!!!\n");
@@ -289,7 +297,8 @@ void legacy_main()
        }
      else
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
- 
+    
+      temperature = mcp9808_read_temperature(&temp_sensor);
      
      switch(call_status)
      {
