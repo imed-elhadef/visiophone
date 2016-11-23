@@ -283,20 +283,9 @@ void legacy_main()
        }
      
       if (rtsp_pi) //Check the mjpg rpi server variable
-      {
-       rtsp_pi=FALSE;           
-       //Ecriture dans la base de données 
-      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-      sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",prefix);
-      if (mysql_query(conn, Querry))
-     {
-       fprintf(stderr, "%s\n", mysql_error(conn));
-      } 
-       //---------------Fin Ecriture-----------------//
+       {
        printf("Activating the mjpg_streamer!!!\n");
        system("/etc/init.d/mjpg-streamer.sh");
-       free(Querry);//You have to free the allocated memory 
-       Querry=0;    
        }
      else
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
