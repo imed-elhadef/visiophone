@@ -53,6 +53,7 @@ extern char buffer_send[2];
 //--------------mcp9808 Temp Sensor Data--------//
 const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
+float temperature = 0;//Ambient temperature 
 //----------------Divers-----------------------//
 extern t_call_status call_status;
 
@@ -232,8 +233,7 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
- float temperature;//Ambient temperature 
- int row_nbr =0;
+
   //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
   //-----------Destroy RTSP Server process if running---------------//
@@ -275,19 +275,10 @@ void legacy_main()
       while (open_door) //Check the open door variable
       {
        open_door=FALSE;           
-       //Ecriture dans la base de données 
-      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-      sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
-      if (mysql_query(conn, Querry))
-     {
-       fprintf(stderr, "%s\n", mysql_error(conn));
-      } 
-       //---------------Fin Ecriture-----------------//
+       write_door_status_to_data_base();//Write to data base  
        printf("Opening the door!!!\n");
        strcpy(buffer_send,"PO");// "PO" Ouverture de la porte (A voir la trame par la suite)
        send_uart_data(buffer_send,sizeof(buffer_send));
-       free(Querry);//You have to free the allocated memory 
-       Querry=0;    
        }
       
       if (rtsp_pi) //Check the mjpg rpi server variable
@@ -298,7 +289,10 @@ void legacy_main()
      else
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
     
-      temperature = mcp9808_read_temperature(&temp_sensor);
+      temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
+      printf("temperature in celsius: %0.2f\n", temperature);
+      write_temperature_to_data_base(temperature);  //Write to data base
+    
      
      switch(call_status)
      {
@@ -349,30 +343,7 @@ void legacy_main()
        {
         
         press=1;
-  
-        //Enregistrement des appels dans la base de données
-         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);
-         char *Querry2 = (char*) malloc(OFFSET_QUERRY_PREFIX);      
-         sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio,id_user_visio) VALUES('','%s','1')",prefix,get_current_time()); 
-        mysql_query(conn, Querry1);
-        sprintf(Querry2, "SELECT * FROM %s_appels_visio",prefix);
-        mysql_query(conn, Querry2);
-        res = mysql_store_result(conn);
-        row_nbr = mysql_num_rows(res);
-
-        if (row_nbr == 101)//Maximum d'historique 100
-         {
-          sprintf(Querry2, "TRUNCATE TABLE %s_appels_visio",prefix);
-          //mysql_query(conn,"TRUNCATE TABLE appels_visio");   
-          mysql_query(conn, Querry2);
-         }
-        
-        free(Querry1);//Free Allocated Memory
-        free(Querry2);
-        Querry1=0;
-        Querry2=0;
-       //---------------Fin Enregistrement-----------------//
-
+        save_calls_to_data_base();//Write to data base
         system("aplay -q /usr/bin/Appel_en_cours.wav");
         Active_LED_Call();
         if (call==Unicall)
