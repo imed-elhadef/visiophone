@@ -48,6 +48,12 @@ bool mcp9808_open(char *dev_fqn, int addr, struct mcp9808 *e);
  */
 int mcp9808_close(struct mcp9808 *e);
 
+/**
+ * Returns the measured temperature in celsius.
+ * 
+ */
+float mcp9808_read_temperature(struct mcp9808 *e);
+
 /*
  * read and returns the mcp9808 byte at reg address [reg_addr] 
  * Note: mcp9808 must have been selected by ioctl(fd,I2C_SLAVE,address) 

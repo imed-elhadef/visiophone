@@ -283,6 +283,25 @@ int mcp9808_close(struct mcp9808 *e)
 	return 0;
 }
 
+float mcp9808_read_temperature(struct mcp9808 *e)
+ { 
+ 	
+	// swap order of the msb and lsb bytes
+	uint16_t temperature_word = i2c_smbus_read_word_data(e->fd, MCP9808_TEMP_REG);
+	uint16_t raw_temperature = ((temperature_word & 0x00FF)<<8) | ((temperature_word & 0xFF00)>>8);
+	
+	float temperature = raw_temperature & 0x0FFF; // extract the first three bytes
+	temperature /= 16.0;
+	
+	if(raw_temperature & 0x1000) { // check sign bit
+		temperature -= 256.0;
+	}	
+	printf("temperature: %0.2f\n",temperature);
+	
+	return temperature;
+ 
+  }
+
 
 int mcp9808_read_current_byte(struct mcp9808* e)
 {
