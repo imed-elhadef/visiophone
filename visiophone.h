@@ -113,6 +113,10 @@ int config_nfc_target(const nfc_target *pnt, bool verbose);
 //Mysql Functions
 int read_from_data_base(void);
 void polling_config_value(void);
+//Write infos to data base
+void write_temperature_to_data_base(float t);
+void write_door_status_to_data_base(void);
+void save_calls_to_data_base(void);
 
 #endif
 

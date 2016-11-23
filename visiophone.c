@@ -45,11 +45,8 @@ char buffer_send[2];
 // Read up to 24 characters from the port if they are there
 char buf[24];
 const char* serial_port= "/dev/ttyAMA0";//Serial Port for raspberry
-//------------------HTTP SEVER-------------//
-/*#define REPLY_SIZE 1024
-int socket_desc;
-struct sockaddr_in httpserver;
-char *message , server_reply[REPLY_SIZE];*/
+//------------------Temperature-------------//
+extern float temperature;
 //-----------------------------------------//
 
 void Active_LED_Call(void)
@@ -447,7 +444,7 @@ void polling_config_value(void)
      row = mysql_fetch_row(res);        
      printf("%d\n",atoi(row[3]));
      printf("%d\n",atoi(row[9]));
-     printf("%d\n",atoi(row[10]));//Ajouter un nouveau champ pour la camera rtsp
+     printf("%d\n",atoi(row[10]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
      if(atoi(row[3]))
      config_visiophone=TRUE; 
      if(atoi(row[9]))
@@ -536,6 +533,7 @@ void porte_ouverte()
       } 
        //---------------Fin Ecriture-----------------//
      free(Querry);
+     Querry=NULL;
 }
 
 void porte_fermee()
@@ -551,104 +549,73 @@ void porte_fermee()
 
        //---------------Fin Ecriture-----------------//
      free(Querry);
+     Querry=NULL;
 }
 
-void porte_forcee()
-{
-
-//Ecriture dans la base de données   
-      // if (mysql_query(conn, "UPDATE portier_visio SET etat_portier_visio = '2'")) 
+ void porte_forcee()
+  {
+    //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
      sprintf(Querry, "UPDATE %s_parametre_visio SET etat_portier_visio = '2'",prefix); 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
       } 
- 
        //---------------Fin Ecriture-----------------//
      free(Querry);
-}
-//********************HTTP SERVER*****************//
-
- /*int init_http_socket()
+     Querry=NULL;
+  }
+//********************Write infos to data base*****************//
+ void write_temperature_to_data_base(float t)
   {
-      //Create socket
-    socket_desc = socket(AF_INET , SOCK_STREAM , 0);
-    if (socket_desc == -1)
-    {
-        printf("Could not create socket");
-    }
-         
-    httpserver.sin_addr.s_addr = inet_addr("127.0.0.1");//localhost
-    httpserver.sin_family = AF_INET;
-    httpserver.sin_port = htons( 80 );
- 
-    //Connect to remote http server
-     if (connect(socket_desc,(struct sockaddr *)&httpserver,sizeof(httpserver)) < 0)
-     {
-        puts("connect error");
-        return 1;
-     }
-     
-     puts("Connected\n");
-  
-      if (fcntl(socket_desc, F_SETFL, O_NDELAY) < 0) 
-        {
-		perror("Can't set socket to non-blocking");
-		exit(0);
-	}
-         
-     return 0;     
-
-   }
-
-  void send_http_socket ()
-   {
-     //Send some data
-     // message = "/videophone/index.php?param1=9";
-     //message = "GET /videophone/index.php?param1=5 HTTP/1.0\r\n\r\n";
-     // message = "GET /videophone/index.php?param1=2 HTTP/1.0\r\n\r\n"; --> Marche
-     //message = "GET /login-user.php HTTP/1.0\r\n\r\n";
-    
-     message = " PUT /videophone/index.php?param1=1 \r\n\r\n";//---> A changer la page
-
-     if( send(socket_desc , message , strlen(message) , 0) < 0)
+    //Ecriture dans la base de données   
+     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
+     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%d'",t,prefix); 
+     if (mysql_query(conn, Querry))
       {
-        puts("Send failed");
-        return 1;
-      }
-
-     puts("Data Sent\n");
-    }
+       fprintf(stderr, "%s\n", mysql_error(conn));
+      } 
+       //---------------Fin Ecriture-----------------//
+     free(Querry);
+     Querry=NULL;
+  } 
  
+ void write_door_status_to_data_base()
+  { 
+     //Ecriture dans la base de données
+     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
+     sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
+      if (mysql_query(conn, Querry))
+     {
+       fprintf(stderr, "%s\n", mysql_error(conn));
+      } 
+       //---------------Fin Ecriture-----------------//
+       free(Querry);//Free the allocated memory 
+       Querry=NULL;    
+  } 
+ 
+ void save_calls_to_data_base()
+  {
+    int row_nbr =0;
+   //Enregistrement des appels dans la base de données
+         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);
+         char *Querry2 = (char*) malloc(OFFSET_QUERRY_PREFIX);      
+         sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio,id_user_visio) VALUES('','%s','1')",prefix,get_current_time()); 
+        mysql_query(conn, Querry1);
+        sprintf(Querry2, "SELECT * FROM %s_appels_visio",prefix);
+        mysql_query(conn, Querry2);
+        res = mysql_store_result(conn);
+        row_nbr = mysql_num_rows(res);
 
-  void read_http_socket ()
-   {
-    //Send some data
-
-     // message = "/videophone/index.php?param1=9";
-     //message = "GET /videophone/index.php?param1=5 HTTP/1.0\r\n\r\n";
-    // message = "GET /videophone/index.php?param1=2 HTTP/1.0\r\n\r\n"; --> Marche
-     message = "GET /login-user.php HTTP/1.0\r\n\r\n";
-    
-     //message = " PUT /videophone/index.php?param1=1 \r\n\r\n";
-
-    if( send(socket_desc , message , strlen(message) , 0) < 0)
-    {
-        puts("Send failed");
-       // return 1;
-    }
-
-   // puts("Data Sent\n");
-     
-    //Receive a reply from the server
-    if( recv(socket_desc, server_reply , sizeof(server_reply) , 0) < 0)
-    {
-        puts("recv failed");
-    }
-    puts("Reply received\n");
-    //puts(server_reply);
-    //puts(server_reply + OFFSET_HTTP + 4000);
-    //Copy data here 
-    }
-    */
+        if (row_nbr == 101)//Maximum d'historique 100
+         {
+          sprintf(Querry2, "TRUNCATE TABLE %s_appels_visio",prefix); 
+          mysql_query(conn, Querry2);
+         }
+        
+        free(Querry1);//Free Allocated Memory
+        free(Querry2);
+        Querry1=NULL;
+        Querry2=NULL;
+       //---------------Fin Enregistrement-----------------//
+   }
