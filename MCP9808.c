@@ -1,16 +1,3 @@
-/****************************************************************************/
- //   copyright            : (C) by 2016 Imed Elhadef <imed.elhadef@arcangel.fr>
-                               
-  
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -235,7 +222,7 @@ static int i2c_write_3b(struct mcp9808 *e, __u8 buf[3])
 		exit(1); } \
 	} while(0);
 
-int mcp9808_open(char *dev_fqn, int addr, struct mcp9808* e)
+bool mcp9808_open(char *dev_fqn, int addr, struct mcp9808* e)
 {
 	int funcs, fd, r;
 	e->fd = e->addr = 0;
@@ -245,14 +232,14 @@ int mcp9808_open(char *dev_fqn, int addr, struct mcp9808* e)
 	if(fd <= 0)
 	{
 		fprintf(stderr, "Error mcp9808_open: %s\n", strerror(errno));
-		return -1;
+		return false;
 	}
 
 	// get funcs list
 	if((r = ioctl(fd, I2C_FUNCS, &funcs) < 0))
 	{
 		fprintf(stderr, "Error mcp9808_open: %s\n", strerror(errno));
-		return -1;
+		return false;
 	}
 
 	
@@ -268,13 +255,24 @@ int mcp9808_open(char *dev_fqn, int addr, struct mcp9808* e)
 	if( ( r = ioctl(fd, I2C_SLAVE, addr)) < 0)
 	{
 		fprintf(stderr, "Error mcp9808_open: %s\n", strerror(errno));
-		return -1;
+		return false;
 	}
 	e->fd = fd;
 	e->addr = addr;
 	e->dev = dev_fqn;
-	
-	return 0;
+         
+        uint16_t manuf_id = (uint16_t) i2c_smbus_read_word_data(e->fd, MCP9808_MANUF_ID_REG);
+	uint16_t device_id = (uint16_t) i2c_smbus_read_word_data(e->fd, MCP9808_DEVICE_ID_REG);
+	e->manuf_id = ((manuf_id & 0x00FF)<<8) | ((manuf_id & 0xFF00)>>8);
+	e->device_id = ((device_id & 0x00FF)<<8) | ((device_id & 0xFF00)>>8);
+        
+        printf("manuf_id = 0x%04x, device_id = 0x%04x\n",e->manuf_id,e->device_id);
+        /*if (e->manuf_id!=0x0054)
+        reurn false;
+	if (e->device_id!=0x0400)
+        reurn false;*/
+
+	return true;
 }
 
 int mcp9808_close(struct mcp9808 *e)
