@@ -359,7 +359,7 @@ int read_from_data_base(void)
    {
       fprintf(stderr, "%s\n", mysql_error(conn));
       return 0;
-  }
+   }
  
   res = mysql_store_result(conn);
    
@@ -370,7 +370,7 @@ int read_from_data_base(void)
   }
   while ((row = mysql_fetch_row(res))) 
   { 
-     strcpy(NFC[badge_number],row[0]);//Save RFID IDs in NFC table
+     strcpy(NFC[badge_number],row[0]);//Save RFID IDs in NFC table --> Maximum badges to save is 124
      printf("%s\n", NFC[badge_number]);
      badge_number++;
   }
@@ -391,10 +391,10 @@ int read_from_data_base(void)
   }
 
    row = mysql_fetch_row(res);    
-   access_mode = row[4];// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
+   access_mode = atoi(row[4]);//column type_access_visiophone --> Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
    printf("Acess mode is: %d\n", access_mode);
    
- //Lecture dans la base de données equipement recepteur   
+ //Lecture dans la base de données les equipements recepteurs   
    sprintf(Querry2, "SELECT * FROM %s_equipement_recepteur WHERE activation_equipement_recepteur='1'",prefix); 
    if (mysql_query(conn, Querry2))
    {
@@ -411,7 +411,7 @@ int read_from_data_base(void)
    while ((row = mysql_fetch_row(res))) 
   { 
      memset(sip_client_id[client_number],0,sizeof(sip_client_id[client_number]));  
-     strcpy(sip_client_id[client_number],row[5]);//Save les address des equipement à appeler in sip_client_id table
+     strcpy(sip_client_id[client_number],row[5]);//Save les address des equipement à appeler in sip_client_id table --> Max 8 clients
      printf("The client adress is: %s\n", sip_client_id[client_number]);
      client_number++;
      printf("The client numbers is:%d\n",client_number);
@@ -424,7 +424,6 @@ int read_from_data_base(void)
   else
   call=Multicall;
   
-    
   free(Querry1); //Libérer la mémoire
   free(Querry2); //Libérer la mémoire
   //Disconnect from Data Base
@@ -442,14 +441,14 @@ void polling_config_value(void)
      mysql_query(conn, Querry);
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
-     printf("%d\n",atoi(row[3]));
-     printf("%d\n",atoi(row[9]));
-     printf("%d\n",atoi(row[10]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
+     printf("%d\n",atoi(row[3]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
+     printf("%d\n",atoi(row[9]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
+     printf("%d\n",atoi(row[11]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
      if(atoi(row[3]))
      config_visiophone=TRUE; 
      if(atoi(row[9]))
      open_door=TRUE;
-     if(atoi(row[10]))
+     if(atoi(row[11]))
      rtsp_pi=TRUE;
      else
      rtsp_pi=FALSE;        

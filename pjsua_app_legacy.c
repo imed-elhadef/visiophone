@@ -132,8 +132,8 @@ static void ui_input_url(const char *title, char *buf, pj_size_t len,
      
      printf("%s: ", title);
     
-     
-    strcpy(buf,"sip:192.168.1.123");
+     strcpy(buf,sip_client_id);
+    //strcpy(buf,"sip:192.168.1.123");
    
     len = strlen(buf);
 
@@ -248,14 +248,14 @@ void legacy_main()
         perror("Unable to initilize UART XBee");
 	}
 //---------------Init mcp9808 Temp Sensor-------------------//
-  while (mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor));
+  while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
 //-------------------MySQL Read Data Base-------------------//
-/* read_visio_account();
+ read_visio_account();
  if (read_from_data_base() == 0)
 	{
         perror("Unable to read from data base");
-	}*/
+	}
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
@@ -264,7 +264,7 @@ void legacy_main()
     {
      Polling_Button();
      polling_normal_nfc();
-     polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi)
+     polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi, temperature)
 
      while (config_visiophone) //Check the config mode variable
       {
@@ -288,11 +288,11 @@ void legacy_main()
        }
      else
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
-    
+    /*
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
       printf("temperature in celsius: %0.2f\n", temperature);
       write_temperature_to_data_base(temperature);  //Write to data base
-    
+    */
      
      switch(call_status)
      {
@@ -326,41 +326,32 @@ void legacy_main()
          
         default:
         printf("Nothing to do!!!\n");
-
       }
    
      while ((buf_Poll[0]==48) && (!press))
 
-       { 
-       printf("Test Button\n");
-       //system("aplay -q /home/pi/Appel_en_cours.wav");
-       ui_make_new_call();
-       press=1;
-       buf_Poll[0]=49;
-       }
-     
-   /*  while ((buf_Poll[0]==48)&&(!press))
-       {
-        
-        press=1;
+      {
+        press=1; 
+        printf("Test Button\n");
+        //system("aplay -q /home/pi/Appel_en_cours.wav");
         save_calls_to_data_base();//Write to data base
-        system("aplay -q /usr/bin/Appel_en_cours.wav");
         Active_LED_Call();
-        if (call==Unicall)
-        {
-        printf("You are in Unicall module!!!\n");
-        index_client=0;
-        ui_make_new_call();
-        }
-        if (call==Multicall)
-        {
-        printf("You are in Multicall module!!!\n");
-        for(index_client=0;index_client<client_number;index_client++)
-        ui_make_new_call();
-        usleep(200);
-         } 
-       buf_Poll[0]=49;
-       }*/
+        //ui_make_new_call();
+         if (call==Unicall)
+           {
+            printf("You are in Unicall module!!!\n");
+            index_client=0;
+             ui_make_new_call();
+            }
+          if (call==Multicall)
+            {
+             printf("You are in Multicall module!!!\n");
+             for(index_client=0;index_client<client_number;index_client++)
+             ui_make_new_call();
+             usleep(200);
+             }
+        buf_Poll[0]=49;
+       }
    	
     }//End for loop
 
