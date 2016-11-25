@@ -130,9 +130,8 @@ static void ui_input_url(const char *title, char *buf, pj_size_t len,
 
     print_buddy_list();
      
-     printf("%s: ", title);
-    
-     strcpy(buf,sip_client_address[client_number]);
+     printf("%s: ", title); 
+    strcpy(buf,sip_client_address[index_client]); 
     //strcpy(buf,"sip:192.168.1.123");
    
     len = strlen(buf);
@@ -271,7 +270,7 @@ void legacy_main()
        config_visiophone=FALSE; //--> Reboot will make it FALSE
        polling_config_nfc();     
        }
-
+      
       read_door_status(open_door);
       read_mjpg_streamer_status(rtsp_pi);
       
@@ -329,7 +328,7 @@ void legacy_main()
            {
             printf("You are in Unicall module!!!\n");
             index_client=0;
-             ui_make_new_call();
+            ui_make_new_call();
             }
           if (call==Multicall)
             {
