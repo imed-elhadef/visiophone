@@ -19,7 +19,7 @@ int client_number=0;//Nombre des destinataires à appeler
 static int badge_number=0;//Nombre des badges dans la base de données
 bool config_visiophone=FALSE;//L'interphone fonctionne par défaut en "Mode Normale" --> Mode Normale=0 Mode Config=1
 bool open_door=FALSE;//Par défaut la porte est fermée
-bool rtsp_pi=FALSE;//Par défaut le serveur mjpg_streamer de la camera Rpi2 ne fonctionne plus
+short int rtsp_pi=0;//Par défaut le serveur mjpg_streamer de la camera Rpi2 ne fonctionne plus
 const char *server = "localhost";
 const char *user = "root";
 const char *password = "arcangel";         /* set me first */
@@ -391,8 +391,10 @@ int read_from_data_base(void)
   }
 
    row = mysql_fetch_row(res);    
-   access_mode = atoi(row[4]);//column type_access_visiophone --> Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
+   access_mode = atoi(row[3]);//column mode_acces_visiophone --> Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
+   strcpy(ip_adress,row[1]);// IP adress de visiophone
    printf("Acess mode is: %d\n", access_mode);
+   printf("IP adress: %s\n", ip_adress);
    
  //Lecture dans la base de données les equipements recepteurs   
    sprintf(Querry2, "SELECT * FROM %s_equipement_recepteur WHERE activation_equipement_recepteur='1'",prefix); 
@@ -410,9 +412,10 @@ int read_from_data_base(void)
   
    while ((row = mysql_fetch_row(res))) 
   { 
-     memset(sip_client_id[client_number],0,sizeof(sip_client_id[client_number]));  
-     strcpy(sip_client_id[client_number],row[5]);//Save les address des equipement à appeler in sip_client_id table --> Max 8 clients
-     printf("The client adress is: %s\n", sip_client_id[client_number]);
+     strcpy(sip_client_name[client_number],row[1]);//Sauvegarder les noms des addresses des equipement à appeler--> Max 8 clients
+     printf("The client name is: %s\n", sip_client_name[client_number]);
+     snprintf(sip_client_address[client_number],sizeof(sip_client_address[client_number]),"sip:%s@%s",sip_client_name[client_number],ip_adress);//Concatiner les le nom avec l'adresse ip pour avoir l'adresse d'appel
+     printf("The client address is: %s\n", sip_client_address[client_number]);
      client_number++;
      printf("The client numbers is:%d\n",client_number);
   }
@@ -441,17 +444,20 @@ void polling_config_value(void)
      mysql_query(conn, Querry);
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
-     printf("%d\n",atoi(row[3]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
-     printf("%d\n",atoi(row[9]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
-     printf("%d\n",atoi(row[11]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
-     if(atoi(row[3]))
+     printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
+     printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
+     printf("%d\n",atoi(row[8]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
+     if(atoi(row[2]))
      config_visiophone=TRUE; 
-     if(atoi(row[9]))
+     if(atoi(row[6]))
      open_door=TRUE;
-     if(atoi(row[11]))
-     rtsp_pi=TRUE;
-     else
-     rtsp_pi=FALSE;        
+     printf("pjpg_streamer value:%d\n",atoi(row[8]));
+     if(atoi(row[8]) == 2)
+     rtsp_pi=2;
+     else if (atoi(row[8]) == 1)
+     rtsp_pi=1;
+     else      
+     rtsp_pi=0;  
      free(Querry);   
    //Disconnect from Data Base
      mysql_free_result(res);
@@ -518,8 +524,19 @@ int recieve_uart_data(char* pdata, int size)
 return 0;
 }
 
-//********************Etat Porte******************//
-
+//********************Acess Door functions******************//
+ void read_door_status(bool door_var)
+ {
+   if(door_var) //Check the open door variable
+      {
+       door_var=FALSE;           
+       write_door_status_to_data_base();//Write to data base  
+       printf("Opening the door!!!\n");
+       strcpy(buffer_send,"PO");// "PO" Ouverture de la porte (A voir la trame par la suite)
+       send_uart_data(buffer_send,sizeof(buffer_send));
+       }
+     
+  }
 void porte_ouverte()
 {
  //Ecriture dans la base de données   
@@ -564,6 +581,22 @@ void porte_fermee()
      free(Querry);
      Querry=NULL;
   }
+//********************Mjpg Streamer*********************//
+void read_mjpg_streamer_status (int mjpg_status)
+ {
+  if (mjpg_status==2) //Check the mjpg rpi server variable
+       {
+       printf("Activating the mjpg_streamer!!!\n");
+       system("/etc/init.d/mjpg-streamer.sh");
+       }
+     else if (mjpg_status==1)
+      {
+      write_mjpg_status_to_data_base();  
+      system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
+      }
+      else 
+       printf("mjpg_streamer in idle state!!!");
+   }
 //********************Write infos to data base*****************//
  void write_temperature_to_data_base(float t)
   {
@@ -584,6 +617,20 @@ void porte_fermee()
      //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
      sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
+      if (mysql_query(conn, Querry))
+     {
+       fprintf(stderr, "%s\n", mysql_error(conn));
+      } 
+       //---------------Fin Ecriture-----------------//
+       free(Querry);//Free the allocated memory 
+       Querry=NULL;    
+  } 
+
+void write_mjpg_status_to_data_base()
+  { 
+     //Ecriture dans la base de données
+     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
+     sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",prefix);
       if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));

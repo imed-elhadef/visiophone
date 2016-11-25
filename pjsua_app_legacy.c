@@ -32,7 +32,7 @@ extern int client_number;
 extern int press;
 extern bool config_visiophone;
 extern bool open_door;
-extern bool rtsp_pi;
+extern short int rtsp_pi;
 //-------------------Mysql Data---------------//
 extern const char *server;
 extern const char *user;
@@ -132,7 +132,7 @@ static void ui_input_url(const char *title, char *buf, pj_size_t len,
      
      printf("%s: ", title);
     
-     strcpy(buf,sip_client_id);
+     strcpy(buf,sip_client_address[client_number]);
     //strcpy(buf,"sip:192.168.1.123");
    
     len = strlen(buf);
@@ -272,22 +272,10 @@ void legacy_main()
        polling_config_nfc();     
        }
 
-      while (open_door) //Check the open door variable
-      {
-       open_door=FALSE;           
-       write_door_status_to_data_base();//Write to data base  
-       printf("Opening the door!!!\n");
-       strcpy(buffer_send,"PO");// "PO" Ouverture de la porte (A voir la trame par la suite)
-       send_uart_data(buffer_send,sizeof(buffer_send));
-       }
+      read_door_status(open_door);
+      read_mjpg_streamer_status(rtsp_pi);
       
-      if (rtsp_pi) //Check the mjpg rpi server variable
-       {
-       printf("Activating the mjpg_streamer!!!\n");
-       system("/etc/init.d/mjpg-streamer.sh");
-       }
-     else
-      system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
+      
     /*
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
       printf("temperature in celsius: %0.2f\n", temperature);

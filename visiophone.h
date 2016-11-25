@@ -117,6 +117,8 @@ void polling_config_value(void);
 void write_temperature_to_data_base(float t);
 void write_door_status_to_data_base(void);
 void save_calls_to_data_base(void);
+void read_mjpg_streamer_status (int mjpg_status);
+void read_door_status(bool door_var);
 
 #endif
 
