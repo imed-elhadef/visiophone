@@ -307,7 +307,7 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
 
  //Ecriture dans la base de données   
    char *Querry = (char*) malloc(OFFSET_QUERRY_RFID);
-   sprintf(Querry, "INSERT INTO %s_badge_rfid (id_badge_RFID,id_user_visio) VALUES('%s','1')",prefix,UID); 
+   sprintf(Querry, "INSERT INTO %s_badge_rfid (id_badge_RFID,activation_badge_RFID) VALUES('%s','1')",prefix,UID); 
    //sprintf(Querry, "INSERT INTO badge_RFID (id_badge_RFID, date_ajout_badge_RFID) VALUES('%s','%s')",UID,get_current_time()); 
    if (mysql_query(conn, Querry)) {
    fprintf(stderr, "%s\n", mysql_error(conn));
@@ -356,29 +356,8 @@ int read_from_data_base(void)
 {
    char *Querry1 = (char*)malloc(OFFSET_QUERRY_PREFIX); 
    char *Querry2 = (char*)malloc(OFFSET_QUERRY_RECEPTEUR);      
-   //Lecture dans la base de données des badges RFID  
-   sprintf(Querry1, "SELECT * FROM %s_badge_rfid",prefix); 
-   if (mysql_query(conn, Querry1))
-   {
-      fprintf(stderr, "%s\n", mysql_error(conn));
-      return 0;
-   }
- 
-  res = mysql_store_result(conn);
-   
-  if (res == NULL) 
-  {
-      fprintf(stderr, "%s\n", mysql_error(conn));
-      return 0;
-  }
-  while ((row = mysql_fetch_row(res))) 
-  { 
-     strcpy(NFC[badge_number],row[0]);//Save RFID IDs in NFC table --> Maximum badges to save is 124
-     printf("%s\n", NFC[badge_number]);
-     badge_number++;
-  }
-  
-//Lecture dans la base de données des paramètres Visiophone
+
+   //Lecture dans la base de données des paramètres Visiophone
    sprintf(Querry1, "SELECT * FROM %s_parametre_visio",prefix); 
    if (mysql_query(conn, Querry1))
    {
@@ -398,6 +377,29 @@ int read_from_data_base(void)
    strcpy(ip_adress,row[1]);// IP adress de visiophone
    printf("Acess mode is: %d\n", access_mode);
    printf("IP adress: %s\n", ip_adress);
+
+   //Lecture dans la base de données des badges RFID  
+   sprintf(Querry2, "SELECT * FROM %s_badge_rfid WHERE activation_badge_RFID = '1'",prefix); 
+   if (mysql_query(conn, Querry2))
+   {
+      fprintf(stderr, "%s\n", mysql_error(conn));
+      return 0;
+   }
+ 
+  res = mysql_store_result(conn);
+   
+  if (res == NULL) 
+  {
+      fprintf(stderr, "%s\n", mysql_error(conn));
+      return 0;
+  }
+  while ((row = mysql_fetch_row(res))) 
+  { 
+     strcpy(NFC[badge_number],row[0]);//Save RFID IDs in NFC table --> Maximum badges to save is 124
+     printf("%s\n", NFC[badge_number]);
+     badge_number++;
+  }
+  
    
  //Lecture dans la base de données les equipements recepteurs   
    sprintf(Querry2, "SELECT * FROM %s_equipement_recepteur WHERE activation_equipement_recepteur='1'",prefix); 
@@ -432,6 +434,8 @@ int read_from_data_base(void)
   
   free(Querry1); //Libérer la mémoire
   free(Querry2); //Libérer la mémoire
+  Querry1 = NULL;
+  Querry2 = NULL;
   //Disconnect from Data Base
    mysql_free_result(res);
    //mysql_close(conn);
