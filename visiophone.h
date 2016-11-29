@@ -49,11 +49,12 @@
 //-----------MySQL--------------//
 //#define OFFSET_QUERRY 64
 #define OFFSET_QUERRY_APPEL 120
-#define OFFSET_QUERRY_RFID 84
+#define OFFSET_QUERRY_RFID 88
 #define OFFSET_QUERRY_RECEPTEUR 84
 #define OFFSET_QUERRY_PREFIX 60
 #define SIZE_STRING_NFC 15
 #define NFC_NUMBER   124
+#define SIZE_CLIENT_NAME 24
 #define SIZE_CLIENT_ADDRESS 128
 #define CLIENT_NUMBER   8
 
@@ -86,8 +87,10 @@ nfc_context *context;
 //-----------------------------------//
 char prefix[5];
 //char sip_client_address[128];
-char sip_client_id[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];
+char sip_client_name[CLIENT_NUMBER][SIZE_CLIENT_NAME];//Le nom des équipements à appeler
+char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
 int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
+char ip_adress[16];
 struct pollfd xfds[1];
 int rc;//Poll
 int fdbutton;
@@ -116,6 +119,7 @@ void polling_config_value(void);
 //Write infos to data base
 void write_temperature_to_data_base(float t);
 void write_door_status_to_data_base(void);
+void write_mjpg_status_to_data_base(void);
 void save_calls_to_data_base(void);
 void read_mjpg_streamer_status (int mjpg_status);
 void read_door_status(bool door_var);

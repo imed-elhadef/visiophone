@@ -301,6 +301,7 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
   char *s;
   printf("Config Read Done!\n");
   str_nfc_target(&s, pnt, verbose);
+  printf("Config Read Done2!\n");
   memcpy(UID,s+OFFSET,15);
   system("aplay -q  /home/pi/Beep.wav");
 
@@ -311,7 +312,9 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
    if (mysql_query(conn, Querry)) {
    fprintf(stderr, "%s\n", mysql_error(conn));
     } 
+   printf("Config Read Done3!\n");
    free(Querry);//Free Allocated Memory
+   Querry=NULL;
    nfc_free(s);
   
    return 0;

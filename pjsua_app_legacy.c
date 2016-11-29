@@ -323,7 +323,7 @@ void legacy_main()
         //system("aplay -q /home/pi/Appel_en_cours.wav");
         save_calls_to_data_base();//Write to data base
         Active_LED_Call();
-        //ui_make_new_call();
+
          if (call==Unicall)
            {
             printf("You are in Unicall module!!!\n");
