@@ -13,7 +13,8 @@
 #include "visiophone.h"
 
 
-Type_call call=None;
+t_call_direction call=None;
+t_call_type call_history = None;
 int press=0;
 int client_number=0;//Nombre des destinataires à appeler
 static int badge_number=0;//Nombre des badges dans la base de données
@@ -352,7 +353,7 @@ int read_visio_account (void) //Lecture de la compte admin de visiophone
 
  return 1;
 }
-int read_from_data_base(void)
+int read_from_database(void)
 {
    char *Querry1 = (char*)malloc(OFFSET_QUERRY_PREFIX); 
    char *Querry2 = (char*)malloc(OFFSET_QUERRY_RECEPTEUR);      
@@ -537,7 +538,7 @@ return 0;
    if(door_var) //Check the open door variable
       {
        door_var=FALSE;           
-       write_door_status_to_data_base();//Write to data base  
+       write_door_status_to_database();//Write to data base  
        printf("Opening the door!!!\n");
        strcpy(buffer_send,"PO");// "PO" Ouverture de la porte (A voir la trame par la suite)
        send_uart_data(buffer_send,sizeof(buffer_send));
@@ -597,14 +598,14 @@ void read_mjpg_streamer_status (int mjpg_status)
        }
      else if (mjpg_status==1)
       {
-      write_mjpg_status_to_data_base();  
+      write_mjpg_status_to_database();  
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
       }
       else 
        printf("mjpg_streamer in idle state!!!");
    }
 //********************Write infos to data base*****************//
- void write_temperature_to_data_base(float t)
+ void write_temperature_to_database(float t)
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
@@ -618,7 +619,7 @@ void read_mjpg_streamer_status (int mjpg_status)
      Querry=NULL;
   } 
  
- void write_door_status_to_data_base()
+ void write_door_status_to_database()
   { 
      //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
@@ -632,7 +633,7 @@ void read_mjpg_streamer_status (int mjpg_status)
        Querry=NULL;    
   } 
 
-void write_mjpg_status_to_data_base()
+void write_mjpg_status_to_database()
   { 
      //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
@@ -646,7 +647,21 @@ void write_mjpg_status_to_data_base()
        Querry=NULL;    
   } 
  
- void save_calls_to_data_base()
+ void write_call_to_database(t_call_type history)
+ {
+  //Ecriture dans la base de données
+     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
+     sprintf(Querry, "UPDATE %s_appels_visio SET type_appels_visio = '%d'",prefix,history);
+      if (mysql_query(conn, Querry))
+     {
+       fprintf(stderr, "%s\n", mysql_error(conn));
+      } 
+       //---------------Fin Ecriture-----------------//
+       free(Querry);//Free the allocated memory 
+       Querry=NULL;
+ }
+
+ void save_call_to_database()
   {
         int row_nbr = 0;
         //Enregistrement des appels dans la base de données

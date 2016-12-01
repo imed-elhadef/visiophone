@@ -26,7 +26,6 @@
 #include "MCP9808.h" 
 
 //------------Imed Variables--------------//
-extern Type_call call;
 int index_client=0;
 extern int client_number;
 extern int press;
@@ -56,7 +55,8 @@ struct mcp9808 temp_sensor;
 float temperature = 0;//Ambient temperature 
 //----------------Divers-----------------------//
 extern t_call_status call_status;
-
+extern t_call_direction call;
+extern t_call_type call_history;
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 
@@ -251,7 +251,7 @@ void legacy_main()
   printf ("Device checked with sucess!!!\n");
 //-------------------MySQL Read Data Base-------------------//
  read_visio_account();
- if (read_from_data_base() == 0)
+ if (read_from_database() == 0)
 	{
         perror("Unable to read from data base");
 	}
@@ -278,36 +278,44 @@ void legacy_main()
     /*
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
       printf("temperature in celsius: %0.2f\n", temperature);
-      write_temperature_to_data_base(temperature);  //Write to data base
+      write_temperature_to_database(temperature);  //Write to data base
     */
      
      switch(call_status)
      {
         case end_call:
         call_status=idle;
+        call_history = received;
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED
+        write_call_to_database(call_history);
         sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
 
         case time_out:
         call_status=idle;
+        call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED 
+        Stop_LED_Communication(); //Close communication LED
+        write_call_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/No_response.wav");
         break;
 
         case busy:
         call_status=idle;
+        call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED */
+        write_call_to_database(call_history);
 
         case reject:
         call_status=idle;
+        call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED 
+        Stop_LED_Communication(); //Close communication LED
+        write_call_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
          
@@ -321,7 +329,7 @@ void legacy_main()
         press=1; 
         printf("Test Button\n");
         //system("aplay -q /home/pi/Appel_en_cours.wav");
-        save_calls_to_data_base();//Write to data base
+        save_call_to_database();//Write to data base
         Active_LED_Call();
 
          if (call==Unicall)

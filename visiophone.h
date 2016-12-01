@@ -67,12 +67,21 @@ typedef enum call
  idle
 } t_call_status;
 
-typedef enum type_call 
+typedef enum call_direction 
 {
  Unicall,
  Multicall,
  None
-} Type_call;
+} t_call_direction;
+
+typedef enum call_type
+{
+ missed,
+ sent,
+ received,
+ none
+ } t_call_type;
+
 
 MYSQL *conn;
 MYSQL_RES *res;
@@ -114,13 +123,13 @@ void polling_config_nfc(void);
 void normal_nfc_target(const nfc_target *pnt, bool verbose);
 int config_nfc_target(const nfc_target *pnt, bool verbose);
 //Mysql Functions
-int read_from_data_base(void);
+int read_from_database(void);
 void polling_config_value(void);
 //Write infos to data base
-void write_temperature_to_data_base(float t);
-void write_door_status_to_data_base(void);
-void write_mjpg_status_to_data_base(void);
-void save_calls_to_data_base(void);
+void write_temperature_to_database(float t);
+void write_door_status_to_database(void);
+void write_mjpg_status_to_database(void);
+void save_call_to_database(void);
 void read_mjpg_streamer_status (int mjpg_status);
 void read_door_status(bool door_var);
 
