@@ -254,6 +254,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 		  call_info.last_status_text.ptr));
 //---------------Imed Modif-----------------------//
 //603 -----> Reject
+//486 -----> Reject from other applications
 //200 -----> Normal end of call
 //408 -----> Time Out
 //468 -----> Busy
@@ -263,7 +264,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
         if (call_info.last_status ==200)  
            call_status=end_call;
                  
-        if (call_info.last_status==603)  
+        if ((call_info.last_status==486) || (call_info.last_status==603)) 
            call_status=reject;
          
         if (call_info.last_status ==468)   
