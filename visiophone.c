@@ -650,8 +650,8 @@ void write_mjpg_status_to_database()
  void write_call_to_database(t_call_type history)
  {
   //Ecriture dans la base de données
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_appels_visio SET type_appels_visio = '%d'",prefix,history);
+     char *Querry = (char*) malloc(OFFSET_QUERRY_APPEL);   
+     sprintf(Querry, "UPDATE %s_appels_visio SET type_appels_visio = '%d' order by id_appels_visio desc limit 1",prefix,history);
       if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -667,7 +667,7 @@ void write_mjpg_status_to_database()
         //Enregistrement des appels dans la base de données
         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);
         char *Querry2 = (char*) malloc(OFFSET_QUERRY_PREFIX);      
-        sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio) VALUES('','%s')",prefix,get_current_time()); 
+        sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio,name_visio) VALUES('','%s','visiophone')",prefix,get_current_time()); 
         mysql_query(conn, Querry1);
         sprintf(Querry2, "SELECT * FROM %s_appels_visio",prefix);
         mysql_query(conn, Querry2);
