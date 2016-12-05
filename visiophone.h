@@ -22,84 +22,7 @@
 #include <sys/signal.h>// for signal Interruption
 #include <errno.h>
 #include <sys/poll.h> //For polling File
-#include <mysql/mysql.h> //Mysql
-//*********NFC****************//
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif // HAVE_CONFIG_H
-#include <err.h>
-#include <inttypes.h>
-#include <signal.h>
-//#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <nfc/nfc.h>
-#include <nfc/nfc-types.h>
-#include "nfc-utils.h"
-//********ZigBee***********//
-# include <termio.h>
-//********HTTP**********//
-#include<sys/socket.h>
-#include<arpa/inet.h> //inet_addr
-//*********************//
 
-#define TRUE 1
-#define FALSE 0
-//-----------MySQL--------------//
-//#define OFFSET_QUERRY 64
-#define OFFSET_QUERRY_APPEL 120
-#define OFFSET_QUERRY_RFID 104
-#define OFFSET_QUERRY_RECEPTEUR 84
-#define OFFSET_QUERRY_PREFIX 60
-#define SIZE_STRING_NFC 15
-#define NFC_NUMBER   124
-#define SIZE_CLIENT_NAME 24
-#define SIZE_CLIENT_ADDRESS 128
-#define CLIENT_NUMBER   8
-
-typedef enum call
-{
- reject,
- end_call,
- time_out,
- busy,
- idle
-} t_call_status;
-
-typedef enum call_direction 
-{
- Unicall,
- Multicall,
- None
-} t_call_direction;
-
-typedef enum call_type
-{
- missed,
- sent,
- received,
- none
- } t_call_type;
-
-
-MYSQL *conn;
-MYSQL_RES *res;
-MYSQL_ROW row;
-//-----------NFC---------------//
-#define OFFSET 85
-nfc_context *context;
-//Base de Donnees Temporaire RFID
-//char* NFC[4] ;
- char NFC[NFC_NUMBER][SIZE_STRING_NFC]; 
- char UID[15];
-//-----------------------------------//
-char prefix[5];
-//char sip_client_address[128];
-char sip_client_name[CLIENT_NUMBER][SIZE_CLIENT_NAME];//Le nom des équipements à appeler
-char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
-int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
-char ip_adress[16];
 struct pollfd xfds[1];
 int rc;//Poll
 int fdbutton;
@@ -112,26 +35,16 @@ char buf_Poll[4];
 
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
+void Active_LED_Call(void);
+void Stop_LED_Call(void);
+void Active_LED_Communication(void);
+void Stop_LED_Communication(void);
+void Active_LED_Porte(void);
+void Stop_LED_Porte(void);
 //Button functions
 void Init_Polling_Button(void);
 void Polling_Button (void);
 void Unexport_Polling_Button (void);
-//NFC Functions
-void nfc_start(void);
-void polling_normal_nfc(void);
-void polling_config_nfc(void);
-void normal_nfc_target(const nfc_target *pnt, bool verbose);
-int config_nfc_target(const nfc_target *pnt, bool verbose);
-//Mysql Functions
-int read_from_database(void);
-void polling_config_value(void);
-//Write infos to data base
-void write_temperature_to_database(float t);
-void write_door_status_to_database(void);
-void write_mjpg_status_to_database(void);
-void save_call_to_database(void);
-void read_mjpg_streamer_status (int mjpg_status);
-void read_door_status(bool door_var);
 
 #endif
 

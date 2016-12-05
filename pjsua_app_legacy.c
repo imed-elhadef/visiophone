@@ -23,14 +23,13 @@
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_common.h"
 #include "visiophone.h"
+#include "database.h"
 #include "MCP9808.h" 
-
 //------------Imed Variables--------------//
 int index_client=0;
-extern int client_number;
+//extern int client_number;
 extern int press;
 extern bool config_visiophone;
-extern bool open_door;
 extern short int rtsp_pi;
 //-------------------Mysql Data---------------//
 extern const char *server;
@@ -52,11 +51,12 @@ extern char buffer_send[2];
 //--------------mcp9808 Temp Sensor Data--------//
 const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
-float temperature = 0;//Ambient temperature 
 //----------------Divers-----------------------//
+extern door_visio door;
 extern t_call_status call_status;
-extern t_call_direction call;
-extern t_call_type call_history;
+
+
+database_visio data_visio = {"",0,0,None}
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 
@@ -232,7 +232,7 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
-
+  float temperature = 0;//Ambient temperature 
   //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
   //-----------Destroy RTSP Server process if running---------------//
@@ -250,15 +250,10 @@ void legacy_main()
   while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
 //-------------------MySQL Read Data Base-------------------//
- read_visio_account();
- if (read_from_database() == 0)
-	{
-        perror("Unable to read from data base");
-	}
+data_visio = read_from_database();
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
-    
     for (;;) 
     {
      Polling_Button();
@@ -267,11 +262,11 @@ void legacy_main()
 
      while (config_visiophone) //Check the config mode variable
       {
-       config_visiophone=FALSE; //--> Reboot will make it FALSE
+       config_visiophone=false; //--> Reboot will make it FALSE
        polling_config_nfc();     
        }
       
-      read_door_status(open_door);
+      read_door_status(&door);
       read_mjpg_streamer_status(rtsp_pi);
       
       
@@ -288,7 +283,7 @@ void legacy_main()
         call_history = received;
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED
-        write_call_to_database(call_history);
+        write_call_type_to_database(call_history);
         sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
@@ -298,7 +293,7 @@ void legacy_main()
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED
-        write_call_to_database(call_history); 
+        write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/No_response.wav");
         break;
@@ -308,14 +303,14 @@ void legacy_main()
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED */
-        write_call_to_database(call_history);
+        write_call_type_to_database(call_history);
 
         case reject:
         call_status=idle;
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
         Stop_LED_Communication(); //Close communication LED
-        write_call_to_database(call_history); 
+        write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
          
@@ -329,7 +324,7 @@ void legacy_main()
         press=1; 
         printf("Test Button\n");
         //system("aplay -q /home/pi/Appel_en_cours.wav");
-        save_call_to_database();//Write to data base
+        save_call_history_to_database();//Write to data base
         Active_LED_Call();
 
          if (call==Unicall)
