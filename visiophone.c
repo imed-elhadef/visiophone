@@ -13,18 +13,18 @@
 #include "visiophone.h"
 
 int press=0;
+char fn_led[34];
 //******************************************//
-
-void Active_LED_Call(void)
+void active_led (led_visio *led)
 {
  /* export */
-  fn = "/sys/class/gpio/export";
-  fdled1 = open(fn, O_WRONLY);
-  if (fdled1 < 0)
+  strcpy(fn_led,"/sys/class/gpio/export");
+  led->fd = open(fn_led, O_WRONLY);
+  if (led->fd < 0)
   ERREXIT("open export")
 
  //Write our value of "26" to the file
-  write(fdled1,"26",2);
+  write(led->fd,led->pin_nbr,2);
   close(fdled1);  
   printf("...export file accessed, new pin now accessible\n");
 
@@ -32,111 +32,34 @@ void Active_LED_Call(void)
 
  //SET DIRECTION
   //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
-  fn ="/sys/class/gpio/gpio26/direction";
-  fdled1 = open(fn,O_RDWR);
+  //fn ="/sys/class/gpio/gpio26/direction";
+  snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/direction",led->pin_nbr);
+  led->fd = open(fn_led,O_RDWR);
 
-  if (fdled1 < 0) 
+  if (led->fd < 0) 
   ERREXIT("open direction")
-  write(fdled1,"out",3);
-  close(fdled1);
+  write(led->fd,"out",3);
+  close(led->fd);
   printf("...direction set to output\n");
   
 //Set Value
-  fn="/sys/class/gpio/gpio26/value";
-  fdled1 = open(fn,O_RDWR);
-  if (fdled1 < 0) 
+  snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/value",led->pin_nbr);
+  //fn_led="/sys/class/gpio/gpio26/value";
+  led->fd = open(fn_led,O_RDWR);
+  if (led->fd < 0) 
   ERREXIT("open value")//1:LED ON \ 0:LED OFF
-  write(fdled1,"1",1);   
+  write(led->fd,"1",1);   
 }
 
-void Stop_LED_Call(void)
-     {
-    write(fdled1,"0",1);//Disable LED
-    close(fdled1);
-    fdled1=-1;
-      }
+void stop_led(led_visio *led)
+    {
+    write(led->fd,"0",1);//Disable LED
+    close(led->fd);
+    led->fd=-1;
+     }
 
-void Active_LED_Communication(void)
-{
- /* export */
-  fn = "/sys/class/gpio/export";
-  fdled2 = open(fn, O_WRONLY);
-  if (fdled2 < 0)
-  ERREXIT("open export")
 
- //Write our value of "12" to the file
-  write(fdled2,"12",2);
-  close(fdled2);  
-  printf("...export file accessed, new pin now accessible\n");
 
-  sleep(1); //---> You must add it for RPI
-
- //SET DIRECTION
-  //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
-  fn ="/sys/class/gpio/gpio12/direction";
-  fdled2 = open(fn,O_RDWR);
-
-  if (fdled2 < 0) 
-  ERREXIT("open direction")
-  write(fdled2,"out",3);
-  close(fdled2);
-  printf("...direction set to output\n");
-  
-//Set Value
-  fn="/sys/class/gpio/gpio12/value";
-  fdled2 = open(fn,O_RDWR);
-  if (fdled2 < 0) 
-  ERREXIT("open value")//1:LED ON \ 0:LED OFF
-  write(fdled2,"1",1);   
-}
-
-void Stop_LED_Communication(void)
-     {
-    write(fdled2,"0",1);//Disable LED
-    close(fdled2);
-    fdled2=-1;
-      }
-
-void Active_LED_Porte(void)
-{
- /* export */
-  fn = "/sys/class/gpio/export";
-  fdled3 = open(fn, O_WRONLY);
-  if (fdled3 < 0)
-  ERREXIT("open export")
-
- //Write our value of "5" to the file
-  write(fdled3,"5",1);
-  close(fdled3);  
-  printf("...export file accessed, new pin now accessible\n");
-
-  sleep(1); //---> You must add it for RPI
-
- //SET DIRECTION
-  //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
-  fn ="/sys/class/gpio/gpio5/direction";
-  fdled3 = open(fn,O_RDWR);
-
-  if (fdled3 < 0) 
-  ERREXIT("open direction")
-  write(fdled3,"out",3);
-  close(fdled3);
-  printf("...direction set to output\n");
-  
-//Set Value
-  fn="/sys/class/gpio/gpio5/value";
-  fdled3 = open(fn,O_RDWR);
-  if (fdled3 < 0) 
-  ERREXIT("open value")//1:LED ON \ 0:LED OFF
-  write(fdled3,"1",1);   
-}
-
-void Stop_LED_Porte(void)
-     {
-    write(fdled3,"0",1);//Disable LED
-    close(fdled3);
-    fdled3=-1;
-      }
 
 void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button
 {

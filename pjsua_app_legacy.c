@@ -38,6 +38,9 @@ extern door_visio door;
 extern t_call_status call_status;
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None};
+led_visio led_call = {.fd=-1,.pin_nbr="26"};
+led_visio led_communication = {.fd=-1,.pin_nbr="12"};
+led_visio led_door = {.fd=-1,.pin_nbr="5"};
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 
@@ -264,7 +267,8 @@ void legacy_main()
         call_status=idle;
         call_history = received;
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED
+        //Stop_LED_Communication(); //Close communication LED
+        stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
         sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
@@ -274,7 +278,8 @@ void legacy_main()
         call_status=idle;
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED
+        //Stop_LED_Communication(); //Close communication LED
+        stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/No_response.wav");
@@ -284,14 +289,16 @@ void legacy_main()
         call_status=idle;
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED */
+        //Stop_LED_Communication(); //Close communication LED */
+        stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
 
         case reject:
         call_status=idle;
         call_history=missed; //Appel en absence
         Stop_LED_Camera();//Closing LEDs camera
-        Stop_LED_Communication(); //Close communication LED
+        //Stop_LED_Communication(); //Close communication LED
+        stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
@@ -307,7 +314,7 @@ void legacy_main()
         printf("Test Button\n");
         //system("aplay -q /home/pi/Appel_en_cours.wav");
         save_call_history_to_database();//Write to data base
-        Active_LED_Call();
+        active_led(&led_call);
 
          if (data_visio.call_direction==Unicall)
            {

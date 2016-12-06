@@ -23,10 +23,17 @@
 #include <errno.h>
 #include <sys/poll.h> //For polling File
 
+typedef struct _led_visio 
+{
+ int fd;
+ char pin_nbr[2];
+} led_visio;
+
+
 struct pollfd xfds[1];
 int rc;//Poll
 int fdbutton;
-int fdled0;//Led camera
+//int fdled0;//Led camera
 int fdled1;//Led Appel
 int fdled2;//Led communication
 int fdled3;//Led porte
