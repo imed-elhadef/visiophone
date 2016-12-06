@@ -27,36 +27,17 @@
 #include "MCP9808.h" 
 //------------Imed Variables--------------//
 int index_client=0;
-//extern int client_number;
 extern int press;
 extern bool config_visiophone;
 extern short int rtsp_pi;
-//-------------------Mysql Data---------------//
-extern const char *server;
-extern const char *user;
-extern const char *password; /* set me first */
-extern const char *database; 
-    
-//----------------------------------//
-//-------------------NFC Data---------------//
-extern bool verbose;
-extern const uint8_t uiPollNr;//20;
-extern const uint8_t uiPeriod;////2;
-extern const nfc_modulation nmModulations[2];
-extern const size_t szModulations;//2;
-extern nfc_target nt;
-extern int result ;
-//----------------ZigBee Data-----------------//
-extern char buffer_send[2];
 //--------------mcp9808 Temp Sensor Data--------//
 const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 extern door_visio door;
 extern t_call_status call_status;
-
-
-database_visio data_visio = {"",0,0,None}
+t_call_type call_history;
+database_visio data_visio = {"",0,0,None};
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 
@@ -250,7 +231,8 @@ void legacy_main()
   while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
 //-------------------MySQL Read Data Base-------------------//
-data_visio = read_from_database();
+ if(read_from_database(&data_visio))
+  printf ("Database read with sucess!!!\n");
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
@@ -327,16 +309,16 @@ data_visio = read_from_database();
         save_call_history_to_database();//Write to data base
         Active_LED_Call();
 
-         if (call==Unicall)
+         if (data_visio.call_direction==Unicall)
            {
             printf("You are in Unicall module!!!\n");
             index_client=0;
             ui_make_new_call();
             }
-          if (call==Multicall)
+          if (data_visio.call_direction==Multicall)
             {
              printf("You are in Multicall module!!!\n");
-             for(index_client=0;index_client<client_number;index_client++)
+             for(index_client=0;index_client<data_visio.client_number;index_client++)
              ui_make_new_call();
              usleep(200);
              }

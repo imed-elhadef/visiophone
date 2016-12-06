@@ -49,23 +49,7 @@
 #define SIZE_CLIENT_ADDRESS 128
 #define CLIENT_NUMBER   8
 
-typedef struct database_visio
- {
-  char prefix[5];//Prefix du compte admin visio
-  int access_mode;
-  int client_number; //Le nombre des clients à appeler
-  t_call_direction call;
-  
-  } database_visio;
-
-typedef struct door_visio
- {
-  bool door_open;
-  char packet_to_zigbee[5];
-  char packet_from_zigbee[5];
-  } door_visio;
-
-typedef enum call
+typedef enum call_status
 {
  reject,
  end_call,
@@ -89,6 +73,21 @@ typedef enum call_type
  none
  } t_call_type;
 
+typedef struct _database_visio
+ {
+ // char prefix[5];//Prefix du compte admin visio
+  int access_mode;
+  int client_number; //Le nombre des clients à appeler
+  t_call_direction call_direction;//enum type
+  } database_visio;
+
+typedef struct _door_visio
+ {
+  bool door_open;
+  char packet_to_zigbee[5];
+  char packet_from_zigbee[5];
+  } door_visio;
+
 
 MYSQL *conn;
 MYSQL_RES *res;
@@ -106,11 +105,12 @@ char sip_client_name[CLIENT_NUMBER][SIZE_CLIENT_NAME];//Le nom des équipements 
 char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
 int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
 char ip_adress[16];
+char prefix[5];//Prefix du compte admin visio
 
 
 int config_nfc_target(const nfc_target *pnt, bool verbose);
 //Mysql Functions
-database_visio read_from_database(void);
+int read_from_database(database_visio *data_visio);
 void polling_config_value(void);
 //Write infos to data base
 void write_temperature_to_database(float t);

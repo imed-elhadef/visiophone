@@ -119,7 +119,7 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
 
  //Ecriture dans la base de données   
    char *Querry = (char*) malloc(OFFSET_QUERRY_RFID);
-   sprintf(Querry, "INSERT INTO %s_badge_rfid (id_badge_RFID,activation_badge_RFID) VALUES('%s','1')",database.prefix,UID); 
+   sprintf(Querry, "INSERT INTO %s_badge_rfid (id_badge_RFID,activation_badge_RFID) VALUES('%s','1')",prefix,UID); 
    //sprintf(Querry, "INSERT INTO badge_RFID (id_badge_RFID, date_ajout_badge_RFID) VALUES('%s','%s')",UID,get_current_time()); 
    if (mysql_query(conn, Querry)) {
    fprintf(stderr, "%s\n", mysql_error(conn));
@@ -128,26 +128,15 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
    free(Querry);//Free Allocated Memory
    Querry=NULL;
    nfc_free(s);
-  
+
    return 0;
 }
 //*****************Data Base*************//
-/* Connect to database */
-
-int read_visio_account (void) //Lecture de la compte admin de visiophone
-{
-  //Disconnect from Data Base
-   mysql_free_result(res);
-   
-
- return 1;
-}
-database_visio read_from_database(void)
+int read_from_database(database_visio *data_visio)
 {    
-   database_visio database;
    char *Querry1 = (char*)malloc(OFFSET_QUERRY_PREFIX); 
    char *Querry2 = (char*)malloc(OFFSET_QUERRY_RECEPTEUR);      
- 
+   //Connect to database
    conn = mysql_init(NULL);
    if (!mysql_real_connect(conn, server,
          user, password, database, 0, NULL, 0)) {
@@ -161,43 +150,42 @@ database_visio read_from_database(void)
    if (mysql_query(conn, "SELECT * FROM comptes_visio WHERE role_comptes_visio ='administrateur'")) 
   {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      //return 0;
-      exit(1);
+      return 0;      
   }
 
   res = mysql_store_result(conn); 
   row = mysql_fetch_row(res);
-  strcpy(database.prefix,row[4]);
-  printf("The prefix is:%s\n",database.prefix);
+  strcpy(prefix,row[4]);
+  printf("The prefix is:%s\n",prefix);
  
 
    //Lecture dans la base de données des paramètres Visiophone
-   sprintf(Querry1, "SELECT * FROM %s_parametre_visio",database.prefix); 
+   sprintf(Querry1, "SELECT * FROM %s_parametre_visio",prefix); 
    if (mysql_query(conn, Querry1))
    {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      //return 0;
+      return 0;
   }
 
   res = mysql_store_result(conn);
   if (res == NULL) 
   {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      //return 0;
+      return 0;
   }
 
    row = mysql_fetch_row(res);    
-   database.access_mode = atoi(row[3]);//column mode_acces_visiophone --> Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
+   data_visio->access_mode = atoi(row[3]);//column mode_acces_visiophone --> Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
    strcpy(ip_adress,row[1]);// IP adress de visiophone
-   printf("Acess mode is: %d\n", access_mode);
+   printf("Acess mode is: %d\n", data_visio->access_mode);
    printf("IP adress: %s\n", ip_adress);
 
    //Lecture dans la base de données des badges RFID  
-   sprintf(Querry2, "SELECT * FROM %s_badge_rfid WHERE activation_badge_RFID = '1'",database.prefix); 
+   sprintf(Querry2, "SELECT * FROM %s_badge_rfid WHERE activation_badge_RFID = '1'",prefix); 
    if (mysql_query(conn, Querry2))
    {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      //return 0;
+      return 0;
    }
  
   res = mysql_store_result(conn);
@@ -205,7 +193,7 @@ database_visio read_from_database(void)
   if (res == NULL) 
   {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      //return 0;
+      return 0;
   }
   while ((row = mysql_fetch_row(res))) 
   { 
@@ -216,35 +204,35 @@ database_visio read_from_database(void)
   
    
  //Lecture dans la base de données les equipements recepteurs   
-   sprintf(Querry2, "SELECT * FROM %s_equipement_recepteur WHERE activation_equipement_recepteur='1'",database.prefix); 
+   sprintf(Querry2, "SELECT * FROM %s_equipement_recepteur WHERE activation_equipement_recepteur='1'",prefix); 
    if (mysql_query(conn, Querry2))
      {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      exit(1);
+      return 0;
       }
   res = mysql_store_result(conn);
   if (res == NULL) 
      {
       fprintf(stderr, "%s\n", mysql_error(conn));
-      exit(1);
+      return 0;
         }
   
    while ((row = mysql_fetch_row(res))) 
   { 
-     strcpy(sip_client_name[client_number],row[1]);//Sauvegarder les noms des addresses des equipement à appeler--> Max 8 clients
-     printf("The client name is: %s\n", sip_client_name[client_number]);
-     snprintf(sip_client_address[client_number],sizeof(sip_client_address[client_number]),"sip:%s@%s",sip_client_name[client_number],ip_adress);//Concatiner les le nom avec l'adresse ip pour avoir l'adresse d'appel
-     printf("The client address is: %s\n", sip_client_address[client_number]);
-     client_number++;
-     printf("The client numbers is:%d\n",client_number);
+     strcpy(sip_client_name[data_visio->client_number],row[1]);//Sauvegarder les noms des addresses des equipement à appeler--> Max 8 clients
+     printf("The client name is: %s\n", sip_client_name[data_visio->client_number]);
+     snprintf(sip_client_address[data_visio->client_number],sizeof(sip_client_address[data_visio->client_number]),"sip:%s@%s",sip_client_name[data_visio->client_number],ip_adress);//Concatiner les le nom avec l'adresse ip pour avoir l'adresse d'appel
+     printf("The client address is: %s\n", sip_client_address[data_visio->client_number]);
+     data_visio->client_number++;
+     printf("The client numbers is:%d\n",data_visio->client_number);
   }
    
-  if (database.client_number<=0)
-  database.call=None;
-  else if (database.client_number==1)
-  database.call=Unicall;
+  if (data_visio->client_number<=0)
+  data_visio->call_direction=None;
+  else if (data_visio->client_number==1)
+  data_visio->call_direction=Unicall;
   else
-  database.call=Multicall;
+  data_visio->call_direction=Multicall;
   
   free(Querry1); //Libérer la mémoire
   free(Querry2); //Libérer la mémoire
@@ -253,7 +241,7 @@ database_visio read_from_database(void)
   //Disconnect from Data Base
    mysql_free_result(res);
    //mysql_close(conn);
-   return database;
+   return 1;
 }
 
 void polling_config_value(void)
@@ -261,7 +249,7 @@ void polling_config_value(void)
  //Lecture dans la base de données de la paramètre config
    //  mysql_query(conn, "SELECT * FROM parametre_visio"); //False --> Mode Normale   TRUE --> Mode config 
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);    
-     sprintf(Querry, "SELECT * FROM %s_parametre_visio",database.prefix); 
+     sprintf(Querry, "SELECT * FROM %s_parametre_visio",prefix); 
      mysql_query(conn, Querry);
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
@@ -367,7 +355,7 @@ void porte_fermee()
 {
      //Ecriture dans la base de données    
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '0'",database.prefix); //Write 0 for closed door
+     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '0'",prefix); //Write 0 for closed door
      if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -382,7 +370,7 @@ void porte_ouverte()
 {
      //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '1'",database.prefix); //Write 1 for opened door
+     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '1'",prefix); //Write 1 for opened door
      if (mysql_query(conn, Querry))
       {
         fprintf(stderr, "%s\n", mysql_error(conn));
@@ -396,7 +384,7 @@ void porte_ouverte()
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '2'",database.prefix); //Write 2 for forced door 
+     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '2'",prefix); //Write 2 for forced door 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -426,7 +414,7 @@ void read_mjpg_streamer_status (int mjpg_status)
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%d'",t,database.prefix); 
+     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%d'",t,prefix); 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -440,7 +428,7 @@ void read_mjpg_streamer_status (int mjpg_status)
   { 
      //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",database.prefix);
+     sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
       if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -454,7 +442,7 @@ void write_mjpg_status_to_database()
   { 
      //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",database.prefix);
+     sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",prefix);
       if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -468,7 +456,7 @@ void write_mjpg_status_to_database()
  {
   //Ecriture dans la base de données
      char *Querry = (char*) malloc(OFFSET_QUERRY_APPEL);   
-     sprintf(Querry, "UPDATE %s_appels_visio SET type_appels_visio = '%d' order by id_appels_visio desc limit 1",database.prefix,history);
+     sprintf(Querry, "UPDATE %s_appels_visio SET type_appels_visio = '%d' order by id_appels_visio desc limit 1",prefix,history);
       if (mysql_query(conn, Querry))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -484,16 +472,16 @@ void write_mjpg_status_to_database()
         //Enregistrement des appels dans la base de données
         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);
         char *Querry2 = (char*) malloc(OFFSET_QUERRY_PREFIX);      
-        sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio,name_visio) VALUES('','%s','visiophone')",database.prefix,get_current_time()); 
+        sprintf(Querry1, "INSERT INTO %s_appels_visio (id_appels_visio,time_appels_visio,name_visio) VALUES('','%s','visiophone')",prefix,get_current_time()); 
         mysql_query(conn, Querry1);
-        sprintf(Querry2, "SELECT * FROM %s_appels_visio",database.prefix);
+        sprintf(Querry2, "SELECT * FROM %s_appels_visio",prefix);
         mysql_query(conn, Querry2);
         res = mysql_store_result(conn);
         row_nbr = mysql_num_rows(res);
 
         if (row_nbr == 101)//Maximum d'historique 100
          {
-          sprintf(Querry2, "TRUNCATE TABLE %s_appels_visio",database.prefix); 
+          sprintf(Querry2, "TRUNCATE TABLE %s_appels_visio",prefix); 
           mysql_query(conn, Querry2);
          }
         
