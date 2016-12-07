@@ -21,7 +21,8 @@
 //-------------------------Imed include files-----------------------------------//
 #include <fcntl.h>
 #include <errno.h>
-#include "visiophone.h" //Imed
+#include "database.h" //Imed
+//#include "visiophone.h" //Imed
 //--------------------End Imed include files---------------------------------//
 #include "pjsua_app.h"
 
@@ -68,50 +69,9 @@ pj_bool_t		    app_running	= PJ_FALSE;
 //----------------------Imed Variables-------------//
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;} 
 t_call_status call_status =idle;
-int fdled0=-1;
-const char* fn;
-//-----------------------Imed Functions-------------------------------//
-void Active_LED_Camera(void)
-{
- /* export */
-  fn = "/sys/class/gpio/export";
-  fdled0 = open(fn, O_WRONLY);
-  if (fdled0 < 0)
-  ERREXIT("open export")
+//int fdled0=-1;
+//const char* fn;
 
- //Write our value of "6" to the file
-  write(fdled0,"6",2);
-  close(fdled0);  
-  printf("...export file accessed, new pin now accessible\n");
-
-  sleep(1); //---> You must add it for RPI 
-
- //SET DIRECTION
-  //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
-  fn ="/sys/class/gpio/gpio6/direction";
-  fdled0 = open(fn,O_RDWR);
-
-  if (fdled0 < 0) 
-  ERREXIT("open direction")
-  write(fdled0,"out",3);
-  close(fdled0);
-  printf("...direction set to output\n");
-  
-//Set Value
-  fn="/sys/class/gpio/gpio6/value";
-  fdled0 = open(fn,O_RDWR);
-  if (fdled0 < 0) 
-  ERREXIT("open value")//1:LED ON \ 0:LED OFF
-  write(fdled0,"1",1);   
-}
-
-void Stop_LED_Camera(void)
-     {
-    write(fdled0,"0",1);//Disable LED
-    close(fdled0);
-    fdled0=-1;
-      }
-//-------------------------------------End Imed Function-------------------------//
 
 /*****************************************************************************
  * Configuration manipulation
@@ -260,6 +220,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 //468 -----> Busy
         if (call_info.last_status ==408)  
            call_status=time_out;
+
 
         if (call_info.last_status ==200)  
            call_status=end_call;

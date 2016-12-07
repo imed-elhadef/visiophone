@@ -261,8 +261,7 @@ void legacy_main()
         case end_call:
         call_status=idle;
         call_history = received;
-        Stop_LED_Camera();//Closing LEDs camera
-        //Stop_LED_Communication(); //Close communication LED
+        stop_led_camera();//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
         sleep(3); 
@@ -272,8 +271,7 @@ void legacy_main()
         case time_out:
         call_status=idle;
         call_history=missed; //Appel en absence
-        Stop_LED_Camera();//Closing LEDs camera
-        //Stop_LED_Communication(); //Close communication LED
+        stop_led_camera();//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
@@ -283,16 +281,14 @@ void legacy_main()
         case busy:
         call_status=idle;
         call_history=missed; //Appel en absence
-        Stop_LED_Camera();//Closing LEDs camera
-        //Stop_LED_Communication(); //Close communication LED */
+        stop_led_camera();//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
 
         case reject:
         call_status=idle;
         call_history=missed; //Appel en absence
-        Stop_LED_Camera();//Closing LEDs camera
-        //Stop_LED_Communication(); //Close communication LED
+        stop_led_camera();//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
