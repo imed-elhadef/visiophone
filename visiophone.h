@@ -36,15 +36,13 @@ const char *fn;
 char buf_Poll[4];
 
 extern int fdbutton;//File descriptor of call button
-extern int fdledcam;//File descriptor of led camera
 extern int press;
-
+extern led_visio led_cam;
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
+//Leds functions
 void active_led (led_visio *led);
 void stop_led(led_visio *led);
-void active_led_camera(void);
-void stop_led_camera(void);
 
 //Button functions
 void Init_Polling_Button(void);

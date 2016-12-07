@@ -21,8 +21,8 @@
 //-------------------------Imed include files-----------------------------------//
 #include <fcntl.h>
 #include <errno.h>
-#include "database.h" //Imed
-//#include "visiophone.h" //Imed
+#include "database.h" 
+#include "visiophone.h" 
 //--------------------End Imed include files---------------------------------//
 #include "pjsua_app.h"
 
@@ -293,6 +293,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %s", 
 		      call_id,
 		      call_info.state_text.ptr));
+                      if (led_cam.fd<0)//New Imed
+                      active_led(&led_cam);//New Imed
+    
 	}
 
 	if (current_call==PJSUA_INVALID_ID)

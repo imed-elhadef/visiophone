@@ -33,9 +33,10 @@ struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None};
-led_visio led_call = {.fd=-1,.pin_nbr="26"};
-led_visio led_communication = {.fd=-1,.pin_nbr="12"};
-led_visio led_door = {.fd=-1,.pin_nbr="5"};
+led_visio led_call = {.fd=-1,.pin_nbr="26"};// Led call infos
+led_visio led_communication = {.fd=-1,.pin_nbr="12"};// Led communication infos
+led_visio led_door = {.fd=-1,.pin_nbr="5"};// Led door infos
+
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 
@@ -261,7 +262,7 @@ void legacy_main()
         case end_call:
         call_status=idle;
         call_history = received;
-        stop_led_camera();//Closing LEDs camera
+        stop_led(&led_cam);//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
         sleep(3); 
@@ -271,7 +272,7 @@ void legacy_main()
         case time_out:
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led_camera();//Closing LEDs camera
+        stop_led(&led_cam);//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
@@ -281,14 +282,14 @@ void legacy_main()
         case busy:
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led_camera();//Closing LEDs camera
+        stop_led(&led_cam);//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history);
 
         case reject:
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led_camera();//Closing LEDs camera
+        stop_led(&led_cam);//Closing LEDs camera
         stop_led(&led_communication); //Close communication LED
         write_call_type_to_database(call_history); 
         sleep(3);
