@@ -14,6 +14,8 @@
 
 int press=0;
 char fn_led[34];
+int fdledcam=-1;//File descriptor of led camera
+int fdbutton=-1;//File descriptor of led camera
 //******************************************//
 void active_led (led_visio *led)
 {
@@ -25,7 +27,7 @@ void active_led (led_visio *led)
 
  //Write our value of "26" to the file
   write(led->fd,led->pin_nbr,2);
-  close(fdled1);  
+  close(led->pin_nbr);  
   printf("...export file accessed, new pin now accessible\n");
 
   sleep(1); //---> You must add it for RPI 
@@ -61,6 +63,46 @@ void stop_led(led_visio *led)
      }
 
 
+void active_led_camera(void)
+{
+ /* export */
+  fn = "/sys/class/gpio/export";
+  fdledcam = open(fn, O_WRONLY);
+  if (fdledcam < 0)
+  ERREXIT("open export")
+
+ //Write our value of "6" to the file
+  write(fdledcam,"6",2);
+  close(fdledcam);  
+  printf("...export file accessed, new pin now accessible\n");
+
+  sleep(1); //---> You must add it for RPI 
+
+ //SET DIRECTION
+  //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
+  fn ="/sys/class/gpio/gpio6/direction";
+  fdledcam = open(fn,O_RDWR);
+
+  if (fdledcam < 0) 
+  ERREXIT("open direction")
+  write(fdledcam,"out",3);
+  close(fdledcam);
+  printf("...direction set to output\n");
+  
+//Set Value
+  fn="/sys/class/gpio/gpio6/value";
+  fdledcam = open(fn,O_RDWR);
+  if (fdledcam < 0) 
+  ERREXIT("open value")//1:LED ON \ 0:LED OFF
+  write(fdledcam,"1",1);   
+}
+
+void stop_led_camera(void)
+   {
+    write(fdledcam,"0",1);//Disable LED
+    close(fdledcam);
+    fdledcam=-1;
+   }
 
 
 void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button

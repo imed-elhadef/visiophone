@@ -32,24 +32,20 @@ typedef struct _led_visio
 
 struct pollfd xfds[1];
 int rc;//Poll
-int fdbutton;
-//int fdled0;//Led camera
-int fdled1;//Led Appel
-int fdled2;//Led communication
-int fdled3;//Led porte
 const char *fn;
 char buf_Poll[4];
 
+extern int fdbutton;//File descriptor of call button
+extern int fdledcam;//File descriptor of led camera
 extern int press;
 
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
-void Active_LED_Call(void);
-void Stop_LED_Call(void);
-void Active_LED_Communication(void);
-void Stop_LED_Communication(void);
-void Active_LED_Porte(void);
-void Stop_LED_Porte(void);
+void active_led (led_visio *led);
+void stop_led(led_visio *led);
+void active_led_camera(void);
+void stop_led_camera(void);
+
 //Button functions
 void Init_Polling_Button(void);
 void Polling_Button (void);
