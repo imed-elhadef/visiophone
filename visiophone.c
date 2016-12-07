@@ -15,6 +15,9 @@
 int press=0;
 char fn_led[34];
 int fdbutton=-1;//File descriptor of led camera
+
+led_visio led_call = {.fd=-1,.pin_nbr="26"};// Led call infos
+led_visio led_communication = {.fd=-1,.pin_nbr="12"};// Led communication infos
 led_visio led_cam = {.fd=-1,.pin_nbr="6"};// Led camera infos
 //******************************************//
 void active_led (led_visio *led)

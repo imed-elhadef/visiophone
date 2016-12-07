@@ -33,8 +33,6 @@ struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None};
-led_visio led_call = {.fd=-1,.pin_nbr="26"};// Led call infos
-led_visio led_communication = {.fd=-1,.pin_nbr="12"};// Led communication infos
 led_visio led_door = {.fd=-1,.pin_nbr="5"};// Led door infos
 
 

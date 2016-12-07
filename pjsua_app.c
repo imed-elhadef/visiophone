@@ -293,6 +293,10 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %s", 
 		      call_id,
 		      call_info.state_text.ptr));
+                      
+                      stop_led(&led_call);//New Imed
+                      if (led_communication.fd<0)//New Imed
+                      active_led(&led_communication);//New Imed
                       if (led_cam.fd<0)//New Imed
                       active_led(&led_cam);//New Imed
     

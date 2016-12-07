@@ -37,6 +37,9 @@ char buf_Poll[4];
 
 extern int fdbutton;//File descriptor of call button
 extern int press;
+
+extern led_visio led_call;
+extern led_visio led_communication;
 extern led_visio led_cam;
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
