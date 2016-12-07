@@ -88,15 +88,22 @@ typedef struct _door_visio
   char packet_from_zigbee[5];
   } door_visio;
 
+typedef struct _mysql_config
+  {
+   const char *server;
+   const char *user;
+   const char *password;         /* set me first */
+   const char *database;
+  } mysql_config;     
 
+   
 MYSQL *conn;
 MYSQL_RES *res;
 MYSQL_ROW row;
 //-----------NFC---------------//
 #define OFFSET 85
 nfc_context *context;
-//Base de Donnees Temporaire RFID
-//char* NFC[4] ;
+//Base de Donnees NFC
  char NFC[NFC_NUMBER][SIZE_STRING_NFC]; //Les IDs des badges NFC
  char UID[15];
 //-----------------------------------//

@@ -11,15 +11,11 @@
  *                                                                         *
  ***************************************************************************/
 #include "database.h"
+mysql_config mysql_conf ={.server="localhost",.user="root",.password="arcangel",.database="visiophone"};
 door_visio door = {false,"OPEN",""};//Par défaut la porte est fermée 
-//int client_number=0;//Nombre des destinataires à appeler
 static int badge_number=0;//Nombre des badges dans la base de données
 bool config_visiophone=false;//L'interphone fonctionne par défaut en "Mode Normale" --> Mode Normale=0 Mode Config=1
 short int rtsp_pi=0;//Par défaut le serveur mjpg_streamer de la camera Rpi2 ne fonctionne plus
-const char *server = "localhost";
-const char *user = "root";
-const char *password = "arcangel";         /* set me first */
-const char *database = "visiophone";     
 //-------------------NFC Data---------------//
 nfc_device *pnd = NULL;
 bool verbose = false;
@@ -138,8 +134,8 @@ int read_from_database(database_visio *data_visio)
    char *Querry2 = (char*)malloc(OFFSET_QUERRY_RECEPTEUR);      
    //Connect to database
    conn = mysql_init(NULL);
-   if (!mysql_real_connect(conn, server,
-         user, password, database, 0, NULL, 0)) {
+   if (!mysql_real_connect(conn, mysql_conf.server,
+         mysql_conf.user, mysql_conf.password, mysql_conf.database, 0, NULL, 0)) {
       fprintf(stderr, "%s\n", mysql_error(conn));
       exit(1);
    }
