@@ -27,15 +27,10 @@
 #include "MCP9808.h" 
 //------------Imed Variables--------------//
 int index_client=0;
-extern int press;
-extern bool config_visiophone;
-extern short int rtsp_pi;
 //--------------mcp9808 Temp Sensor Data--------//
 const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
-extern door_visio door;
-extern t_call_status call_status;
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None};
 led_visio led_call = {.fd=-1,.pin_nbr="26"};

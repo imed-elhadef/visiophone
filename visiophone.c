@@ -33,6 +33,7 @@ void active_led (led_visio *led)
  //SET DIRECTION
   //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
   //fn ="/sys/class/gpio/gpio26/direction";
+  printf("/sys/class/gpio/gpio%s/direction\n",led->pin_nbr);
   snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/direction",led->pin_nbr);
   led->fd = open(fn_led,O_RDWR);
 
@@ -43,6 +44,7 @@ void active_led (led_visio *led)
   printf("...direction set to output\n");
   
 //Set Value
+  printf("/sys/class/gpio/gpio%s/value\n",led->pin_nbr);
   snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/value",led->pin_nbr);
   //fn_led="/sys/class/gpio/gpio26/value";
   led->fd = open(fn_led,O_RDWR);

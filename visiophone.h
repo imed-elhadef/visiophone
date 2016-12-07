@@ -40,6 +40,8 @@ int fdled3;//Led porte
 const char *fn;
 char buf_Poll[4];
 
+extern int press;
+
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
 void Active_LED_Call(void);

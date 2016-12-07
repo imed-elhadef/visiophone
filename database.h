@@ -90,6 +90,10 @@ typedef struct _door_visio
 
 typedef struct _mysql_config
   {
+   //const char *server = "localhost";
+   //const char *user = "root";
+   //const char *password = "arcangel";         /* set me first */
+   //const char *database = "visiophone";
    const char *server;
    const char *user;
    const char *password;         /* set me first */
@@ -114,6 +118,10 @@ int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton cap
 char ip_adress[16];
 char prefix[5];//Prefix du compte admin visio
 
+extern t_call_status call_status;
+extern door_visio door;
+extern bool config_visiophone;
+extern short int rtsp_pi;
 
 int config_nfc_target(const nfc_target *pnt, bool verbose);
 //Mysql Functions
