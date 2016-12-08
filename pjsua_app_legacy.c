@@ -1,9 +1,9 @@
 
 /* $Id: pjsua_app_legacy.c 5065 2015-04-13 12:14:02Z nanang $ */
 /*
+ * Copyright (C) 2014-2016 Imed Elhadef "Arcangel Technologies" <imed.elhadef@arcangel.fr>
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
-* Copyright (C) 2016 Imed Elhadef <imed.elhadef@arcangel.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 t_call_type call_history;
-database_visio data_visio = {"",0,0,None};
+database_visio data_visio = {"",0,0,None,NULL};
 led_visio led_door = {.fd=-1,.pin_nbr="5"};// Led door infos
 
 
@@ -109,7 +109,7 @@ static void ui_input_url(const char *title, char *buf, pj_size_t len,
     print_buddy_list();
      
      printf("%s: ", title); 
-    strcpy(buf,sip_client_address[index_client]); 
+    strcpy(buf,data_visio.sip_client_address[index_client]); 
     //strcpy(buf,"sip:192.168.1.123");
    
     len = strlen(buf);

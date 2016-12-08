@@ -1,5 +1,5 @@
 /****************************************************************************/
- //   copyright            : (C) by 2016 Imed Elhadef <imed.elhadef@arcangel.fr>
+// copyright: (C) by 2016 Imed Elhadef "Arcangel Technologies" <imed.elhadef@arcangel.fr>
                                
   
 /***************************************************************************
@@ -217,8 +217,8 @@ int read_from_database(database_visio *data_visio)
   { 
      strcpy(sip_client_name[data_visio->client_number],row[1]);//Sauvegarder les noms des addresses des equipement à appeler--> Max 8 clients
      printf("The client name is: %s\n", sip_client_name[data_visio->client_number]);
-     snprintf(sip_client_address[data_visio->client_number],sizeof(sip_client_address[data_visio->client_number]),"sip:%s@%s",sip_client_name[data_visio->client_number],ip_adress);//Concatiner les le nom avec l'adresse ip pour avoir l'adresse d'appel
-     printf("The client address is: %s\n", sip_client_address[data_visio->client_number]);
+     snprintf(data_visio->sip_client_address[data_visio->client_number],sizeof(data_visio->sip_client_address[data_visio->client_number]),"sip:%s@%s",sip_client_name[data_visio->client_number],ip_adress);//Concatiner les le nom avec l'adresse ip pour avoir l'adresse d'appel
+     printf("The client address is: %s\n", data_visio->sip_client_address[data_visio->client_number]);
      data_visio->client_number++;
      printf("The client numbers is:%d\n",data_visio->client_number);
   }

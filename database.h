@@ -1,5 +1,5 @@
 /****************************************************************************/
- //   copyright            : (C) by 2016 Imed Elhadef
+// copyright: (C) by 2016 Imed Elhadef "Arcangel Technologies" <imed.elhadef@arcangel.fr>
    
   
 /***************************************************************************
@@ -76,9 +76,11 @@ typedef enum call_type
 typedef struct _database_visio
  {
  // char prefix[5];//Prefix du compte admin visio
-  int access_mode;
+  int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
   int client_number; //Le nombre des clients à appeler
   t_call_direction call_direction;//enum type
+  char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
+
   } database_visio;
 
 typedef struct _door_visio
@@ -90,17 +92,12 @@ typedef struct _door_visio
 
 typedef struct _mysql_config
   {
-   //const char *server = "localhost";
-   //const char *user = "root";
-   //const char *password = "arcangel";         /* set me first */
-   //const char *database = "visiophone";
    const char *server;
    const char *user;
    const char *password;         /* set me first */
    const char *database;
   } mysql_config;     
-
-   
+  
 MYSQL *conn;
 MYSQL_RES *res;
 MYSQL_ROW row;
@@ -111,10 +108,7 @@ nfc_context *context;
  char NFC[NFC_NUMBER][SIZE_STRING_NFC]; //Les IDs des badges NFC
  char UID[15];
 //-----------------------------------//
-//char sip_client_address[128];
 char sip_client_name[CLIENT_NUMBER][SIZE_CLIENT_NAME];//Le nom des équipements à appeler
-char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
-int access_mode;// Access Mode: 0 RFID / 1 Bouton capactif / 2 RFID & Bouton capactif
 char ip_adress[16];
 char prefix[5];//Prefix du compte admin visio
 
