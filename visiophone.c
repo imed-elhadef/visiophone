@@ -1,5 +1,5 @@
 /****************************************************************************/
- //   copyright            : (C) by 2016 Imed Elhadef <imed.elhadef@arcangel.fr>
+ // copyright: (C) by 2016 Imed Elhadef "Arcangel Technologies" <imed.elhadef@arcangel.fr>
                                
   
 /***************************************************************************
@@ -106,7 +106,8 @@ void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button
 void Polling_Button (void)
  {     
         //printf("Waiting for interrupts!!!\n");  
-  	rc = poll(xfds, 1, 500); if(rc == -1) ERREXIT("poll value") //500 polling time
+  	//rc = poll(xfds, 1, 500); if(rc == -1) ERREXIT("poll value") //500 polling time
+        rc = poll(xfds, 1, 10); if(rc == -1) ERREXIT("poll value") //10 polling time
 	rc = lseek(fdbutton, 0, SEEK_SET); if (rc < 0)  ERREXIT("lseek value")
   	rc = read(fdbutton, buf_Poll, 2); if (rc != 2) ERREXIT("read value")
   	buf_Poll[1] = '\0'; // Overwrite the newline character with terminator
