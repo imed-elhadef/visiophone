@@ -27,6 +27,7 @@ typedef struct _led_visio
 {
  int fd;
  char pin_nbr[2];
+ char fn_led[34];
 } led_visio;
 
 

@@ -14,17 +14,17 @@
 
 int press=0;
 char fn_led[34];
-int fdbutton=-1;//File descriptor of led camera
+int fdbutton=-1;//File descriptor of call button
 
-led_visio led_call = {.fd=-1,.pin_nbr="26"};// Led call infos
-led_visio led_communication = {.fd=-1,.pin_nbr="12"};// Led communication infos
-led_visio led_cam = {.fd=-1,.pin_nbr="6"};// Led camera infos
+led_visio led_call = {.fd=-1,.pin_nbr="26",.fn_led=""};// Led call infos
+led_visio led_communication = {.fd=-1,.pin_nbr="12",.fn_led=""};// Led communication infos
+led_visio led_cam = {.fd=-1,.pin_nbr="6",.fn_led=""};// Led camera infos
 //******************************************//
 void active_led (led_visio *led)
 {
  /* export */
-  strcpy(fn_led,"/sys/class/gpio/export");
-  led->fd = open(fn_led, O_WRONLY);
+  strcpy(led->fn_led,"/sys/class/gpio/export");
+  led->fd = open(led->fn_led, O_WRONLY);
   if (led->fd < 0)
   ERREXIT("open export")
 
@@ -39,8 +39,8 @@ void active_led (led_visio *led)
   //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
   //fn ="/sys/class/gpio/gpio26/direction";
   printf("/sys/class/gpio/gpio%s/direction\n",led->pin_nbr);
-  snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/direction",led->pin_nbr);
-  led->fd = open(fn_led,O_RDWR);
+  snprintf(led->fn_led,sizeof(led->fn_led),"/sys/class/gpio/gpio%s/direction",led->pin_nbr);
+  led->fd = open(led->fn_led,O_RDWR);
 
   if (led->fd < 0) 
   ERREXIT("open direction")
@@ -50,9 +50,9 @@ void active_led (led_visio *led)
   
 //Set Value
   printf("/sys/class/gpio/gpio%s/value\n",led->pin_nbr);
-  snprintf(fn_led,sizeof(fn_led),"/sys/class/gpio/gpio%s/value",led->pin_nbr);
-  //fn_led="/sys/class/gpio/gpio26/value";
-  led->fd = open(fn_led,O_RDWR);
+  snprintf(led->fn_led,sizeof(led->fn_led),"/sys/class/gpio/gpio%s/value",led->pin_nbr);
+  //led->fn_led="/sys/class/gpio/gpio26/value";
+  led->fd = open(led->fn_led,O_RDWR);
   if (led->fd < 0) 
   ERREXIT("open value")//1:LED ON \ 0:LED OFF
   write(led->fd,"1",1);   
@@ -64,7 +64,6 @@ void stop_led(led_visio *led)
     close(led->fd);
     led->fd=-1;
      }
-
 
 
 void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button

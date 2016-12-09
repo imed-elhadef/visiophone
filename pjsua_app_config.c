@@ -33,7 +33,7 @@ static struct mcp9808 temp_sensor;
 //----------------Divers-----------------------//
 static t_call_type call_history;
 database_visio data_visio = {"",0,0,None,NULL};
-led_visio led_door = {.fd=-1,.pin_nbr="5"};// Led door infos
+led_visio led_door = {.fd=-1,.pin_nbr="5",.fn_led=""};// Led door infos
 
 
 #define THIS_FILE	"pjsua_app_legacy.c"
