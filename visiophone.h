@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>//System Call
+#include <stdbool.h> //For bool type
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>//For struct itimerval
@@ -44,6 +45,7 @@ char buf_Poll[4];
 extern int fdbutton;//File descriptor of the call button
 extern int press;
 //---------------------------------------//
+extern bool interrupt;
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
 //Leds functions

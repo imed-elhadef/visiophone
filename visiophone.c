@@ -16,10 +16,9 @@
 int zigbee_fd=-1;
 const char* serial_port= "/dev/ttyAMA0";//Serial Port for raspberry
 //----------------------------------------//
-
+bool interrupt=true;
 int press=0;
 int fdbutton=-1;//File descriptor of call button
-
 led_visio led_call = {.fd=-1,.pin_nbr="26",.fn_led=""};// Led call infos
 led_visio led_communication = {.fd=-1,.pin_nbr="12",.fn_led=""};// Led communication infos
 led_visio led_cam = {.fd=-1,.pin_nbr="6",.fn_led=""};// Led camera infos
@@ -150,7 +149,10 @@ int init_uart_port()
   tcflush(zigbee_fd, TCIFLUSH);
   tcsetattr(zigbee_fd, TCSANOW, &options);
  
-
+  //Make the UART file discreptor interruptable with sigaction
+   fcntl(zigbee_fd, F_SETFL, FNDELAY);
+   fcntl(zigbee_fd, F_SETOWN, getpid()); 
+   fcntl(zigbee_fd, F_SETFL,  O_ASYNC ); 
   // Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
   if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
 	{
@@ -160,9 +162,11 @@ int init_uart_port()
 
  return 1;
 }
+
 //send data to XBee 
 int send_uart_data(char* pdata, int size)
 {
+  interrupt=false;
 // Write to the port
   int n = write(zigbee_fd,pdata,size);
   if (n < 0) {
@@ -174,6 +178,7 @@ return 0;
 //receive data from XBee 
 int recieve_uart_data(char* pdata, int size)
 {
+  interrupt=true;
   //read from port
   int n = read(zigbee_fd, (void*)pdata, size);
   if (n < 0) 

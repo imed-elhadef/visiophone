@@ -26,19 +26,19 @@
 #include "database.h"
 #include "MCP9808.h" 
 //------------Imed Variables--------------//
-int index_client=0;
 //--------------mcp9808 Temp Sensor Data--------//
-const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
+static const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
+//------------ZigBee signal handler---------//
+void signal_handler_IO (int status);//definition of signal handler 
+struct sigaction saioUART; // definition of signal action 
 //----------------Divers-----------------------//
+static int index_client=0;
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None,NULL};
-led_visio led_door = {.fd=-1,.pin_nbr="5"};// Led door infos
-
+led_visio led_door = {.fd=-1,.pin_nbr="5",.fn_led=""};// Led door infos
 
 #define THIS_FILE	"pjsua_app_legacy.c"
-
-
 /* An attempt to avoid stdout buffering for python tests:
  * - call 'fflush(stdout)' after each call to 'printf()/puts()'
  * - apply 'setbuf(stdout, 0)', but it is not guaranteed by the standard:
@@ -219,6 +219,13 @@ void legacy_main()
   Unexport_Polling_Button();
   sleep(1);//You should add it for RPI
   Init_Polling_Button();
+//------Interrupt handler configuration-----//
+        saioUART.sa_handler = signal_handler_IO;
+        saioUART.sa_flags = 0;
+        //saioUART.sa_mask = 0; //Masquer
+        //sigemptyset(&saioUART.sa_mask);
+        saioUART.sa_restorer = NULL; 
+        sigaction(SIGIO,&saioUART,NULL);
 //----------------Init XBee Module------------------------//
  if (init_uart_port()== 0)
 	{
@@ -327,3 +334,10 @@ void legacy_main()
 on_exit:
     ;
 }
+
+void signal_handler_IO (int status)
+ {   
+
+    printf("Received data from XBee\n");  
+ }
+
