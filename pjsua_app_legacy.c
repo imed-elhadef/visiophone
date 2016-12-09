@@ -36,7 +36,7 @@ struct sigaction saioUART; // definition of signal action
 static int index_client=0;
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None,NULL};
-led_visio led_door = {.fd=-1,.pin_nbr="5",.fn_led=""};// Led door infos
+
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 /* An attempt to avoid stdout buffering for python tests:
@@ -338,6 +338,7 @@ on_exit:
 void signal_handler_IO (int status)
  {   
 
-    printf("Received data from XBee\n");  
+   printf("Received data from XBee\n");    
+   zigbee_handle (&door);
  }
 

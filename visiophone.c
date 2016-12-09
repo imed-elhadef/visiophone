@@ -11,6 +11,8 @@
  *                                                                         *
  ***************************************************************************/
 #include "visiophone.h"
+#include "database.h"
+
 
 //--------------ZigBee Variables-------------//
 int zigbee_fd=-1;
@@ -22,6 +24,7 @@ int fdbutton=-1;//File descriptor of call button
 led_visio led_call = {.fd=-1,.pin_nbr="26",.fn_led=""};// Led call infos
 led_visio led_communication = {.fd=-1,.pin_nbr="12",.fn_led=""};// Led communication infos
 led_visio led_cam = {.fd=-1,.pin_nbr="6",.fn_led=""};// Led camera infos
+led_visio led_door = {.fd=-1,.pin_nbr="5",.fn_led=""};// Led door infos
 //******************************************//
 void active_led (led_visio *led)
 {
@@ -196,3 +199,26 @@ int recieve_uart_data(char* pdata, int size)
 return 0;
 }
 
+void zigbee_handle (door_visio *d)
+    {
+        recieve_uart_data(d->packet_from_zigbee,2);            
+        if (!strcmp(d->packet_from_zigbee,"OK"))//Porte Ouverte               
+         {             
+           active_led(&led_door);//Activate the open door led
+           porte_ouverte();//Changing the door variable in database
+           system("aplay -q /home/pi/Porte_Ouverte.wav");
+         }
+
+       if (!strcmp(d->packet_from_zigbee,"FD"))//Porte Fermee
+        {  
+          stop_led(&led_door);//Desactivate the open door led
+          porte_fermee();//Changing the  door variable in database
+          system("aplay -q /home/pi/Porte_Fermee.wav");                        
+         }       
+       if (!strcmp(d->packet_from_zigbee,"DF"))//Porte Forcee                                     
+        {  
+          porte_forcee();//Changing the door variable in database
+          system("aplay -q /home/pi/Porte_Forcee.wav");                       
+         }           
+  
+    }
