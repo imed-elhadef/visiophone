@@ -35,8 +35,6 @@
 #include <nfc/nfc.h>
 #include <nfc/nfc-types.h>
 #include "nfc-utils.h"
-//********ZigBee***********//
-# include <termio.h>
 //-----------MySQL--------------//
 //#define OFFSET_QUERRY 64
 #define OFFSET_QUERRY_APPEL 168

@@ -12,8 +12,12 @@
  ***************************************************************************/
 #include "visiophone.h"
 
+//--------------ZigBee Variables-------------//
+int zigbee_fd=-1;
+const char* serial_port= "/dev/ttyAMA0";//Serial Port for raspberry
+//----------------------------------------//
+
 int press=0;
-char fn_led[34];
 int fdbutton=-1;//File descriptor of call button
 
 led_visio led_call = {.fd=-1,.pin_nbr="26",.fn_led=""};// Led call infos
@@ -64,6 +68,7 @@ void stop_led(led_visio *led)
     close(led->fd);
     led->fd=-1;
      }
+
 
 
 void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button
@@ -124,5 +129,65 @@ void Polling_Button (void)
   close(fdbutton);
  }
 
+//********************XBee Module*****************//
+//initilize ttyAMA0 dev for XBee
+int init_uart_port()
+{
+ struct termios options;
 
+ zigbee_fd = open(serial_port, O_RDWR | O_NOCTTY | O_NDELAY);
+  if (zigbee_fd == -1) {
+    perror("open_port: Unable to open /dev/ttyAMA0 - ");
+    return 0;
+  }
+
+  //set attr 
+  tcgetattr(zigbee_fd, &options);
+  options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;		//<Set baud rate to 9600
+  options.c_iflag = IGNPAR;
+  options.c_oflag = 0;
+  options.c_lflag = 0;
+  tcflush(zigbee_fd, TCIFLUSH);
+  tcsetattr(zigbee_fd, TCSANOW, &options);
+ 
+
+  // Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
+  if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
+	{
+	 perror("Unable set to NONBLOCK mode");
+	 return 0;
+	}
+
+ return 1;
+}
+//send data to XBee 
+int send_uart_data(char* pdata, int size)
+{
+// Write to the port
+  int n = write(zigbee_fd,pdata,size);
+  if (n < 0) {
+    perror("Write failed - ");
+    return 1;
+  }
+return 0;
+}
+//receive data from XBee 
+int recieve_uart_data(char* pdata, int size)
+{
+  //read from port
+  int n = read(zigbee_fd, (void*)pdata, size);
+  if (n < 0) 
+  {
+    perror("Read failed - ");
+    return 1;
+  } 
+  else if (n == 0) printf("No data on port\n");
+
+  else 
+  {
+    pdata[n] = '\0';
+    printf("%i bytes read : %s\n", n, pdata);
+  }
+return 0;
+}
 

@@ -32,11 +32,9 @@ const size_t szModulations = 1;//2;
 nfc_target nt;
 int result = 0;
 //-------------------ZigBee-------------------//
-int zigbee_fd=-1;
 char buffer_send[5];
 // Read up to 24 characters from the port if they are there
 //char buf[24];
-const char* serial_port= "/dev/ttyAMA0";//Serial Port for raspberry
 //******************NFC************************//
 void nfc_start(void)
 {
@@ -94,8 +92,8 @@ void normal_nfc_target(const nfc_target *pnt, bool verbose)
            if (strncmp(NFC[i],UID,14) == 0)
              {
               printf("Test Good\n");
-              //buffer_send [0] = 0x50;// 'P' Ouverture de la porte (A voir)
-              strcpy(buffer_send,"OPEN");// "PO" Ouverture de la porte (A voir)
+              //strcpy(buffer_send,"OPEN");// "OPEN" Ouverture de la porte (A voir)
+              strcpy(buffer_send,door.packet_to_zigbee);// "OPEN" Ouverture de la porte (A voir)
               send_uart_data(buffer_send,sizeof(buffer_send));
               break;
              } 
@@ -107,12 +105,9 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
 {
   int number=1;
   char *s;
-  printf("Config Read Done!\n");
   str_nfc_target(&s, pnt, verbose);
-  printf("Config Read Done2!\n");
   memcpy(UID,s+OFFSET,15);
   system("aplay -q  /home/pi/Beep.wav");
-
  //Ecriture dans la base de données   
    char *Querry = (char*) malloc(OFFSET_QUERRY_RFID);
    sprintf(Querry, "INSERT INTO %s_badge_rfid (id_badge_RFID,activation_badge_RFID) VALUES('%s','1')",prefix,UID); 
@@ -120,7 +115,6 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
    if (mysql_query(conn, Querry)) {
    fprintf(stderr, "%s\n", mysql_error(conn));
     } 
-   printf("Config Read Done3!\n");
    free(Querry);//Free Allocated Memory
    Querry=NULL;
    nfc_free(s);
@@ -267,67 +261,6 @@ void polling_config_value(void)
    //Disconnect from Data Base
      mysql_free_result(res);
   }
-//********************XBee Module*****************//
-//initilize ttyAMA0 dev for XBee
-int init_uart_port()
-{
- struct termios options;
-
- zigbee_fd = open(serial_port, O_RDWR | O_NOCTTY | O_NDELAY);
-  if (zigbee_fd == -1) {
-    perror("open_port: Unable to open /dev/ttyAMA0 - ");
-    return 0;
-  }
-
-  //set attr 
-  tcgetattr(zigbee_fd, &options);
-  options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;		//<Set baud rate to 9600
-  options.c_iflag = IGNPAR;
-  options.c_oflag = 0;
-  options.c_lflag = 0;
-  tcflush(zigbee_fd, TCIFLUSH);
-  tcsetattr(zigbee_fd, TCSANOW, &options);
- 
-
-  // Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
-  if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
-	{
-	 perror("Unable set to NONBLOCK mode");
-	 return 0;
-	}
-
- return 1;
-}
-//send XBee data 
-int send_uart_data(char* pdata, int size)
-{
-// Write to the port
-  int n = write(zigbee_fd,pdata,size);
-  if (n < 0) {
-    perror("Write failed - ");
-    return 1;
-  }
-return 0;
-}
-//receive XBee data 
-int recieve_uart_data(char* pdata, int size)
-{
-  //read from port
-  int n = read(zigbee_fd, (void*)pdata, size);
-  if (n < 0) 
-  {
-    perror("Read failed - ");
-    return 1;
-  } 
-  else if (n == 0) printf("No data on port\n");
-
-  else 
-  {
-    pdata[n] = '\0';
-    printf("%i bytes read : %s\n", n, pdata);
-  }
-return 0;
-}
 
 //********************Acess Door functions******************//
  void read_door_status(door_visio *d)
@@ -339,7 +272,7 @@ return 0;
        //write_door_status_to_database();//Write to data base
        index=false;  
        printf("Opening the door!!!\n");
-       strcpy(buffer_send,d->packet_to_zigbee);// "PO" Ouverture de la porte (A voir la trame par la suite)
+       strcpy(buffer_send,d->packet_to_zigbee);// "OPEN" Ouverture de la porte (A voir la trame par la suite)
        send_uart_data(buffer_send,sizeof(buffer_send));
        }
    else if ((d->door_open) && (!index))
