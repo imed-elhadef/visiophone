@@ -157,11 +157,11 @@ int init_uart_port()
    fcntl(zigbee_fd, F_SETOWN, getpid()); 
    fcntl(zigbee_fd, F_SETFL,  O_ASYNC ); 
   // Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
-  if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
+  /*if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
 	{
 	 perror("Unable set to NONBLOCK mode");
 	 return 0;
-	}
+	}*/ 
 
  return 1;
 }
