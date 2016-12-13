@@ -13,7 +13,7 @@
 #include "visiophone.h"
 #include "database.h"
 
-
+#define XBEE_OFFSET 15
 //--------------ZigBee Variables-------------//
 int zigbee_fd=-1;
 const char* serial_port= "/dev/ttyAMA0";//Serial Port for raspberry
@@ -194,7 +194,7 @@ int recieve_uart_data(char* pdata, int size)
   else 
   {
     pdata[n] = '\0';
-    printf("%i bytes read : %s\n", n, pdata);
+    printf("%i bytes read : %s\n", n, pdata+XBEE_OFFSET);
   }
 return 0;
 }
