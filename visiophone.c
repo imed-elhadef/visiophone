@@ -157,7 +157,7 @@ int init_uart_port()
    fcntl(zigbee_fd, F_SETOWN, getpid()); 
    fcntl(zigbee_fd, F_SETFL,  O_ASYNC ); 
   // Turn off blocking for reads, use (fd, F_SETFL, FNDELAY) if you want that
-  /*if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0)
+  /*if (fcntl(zigbee_fd, F_SETFL, O_NONBLOCK) < 0) //Masqued Now
 	{
 	 perror("Unable set to NONBLOCK mode");
 	 return 0;
@@ -181,7 +181,7 @@ return 0;
 //receive data from XBee 
 int recieve_uart_data(char* pdata, int size)
 {
-  interrupt=true;
+  //interrupt=true;
   //read from port
   int n = read(zigbee_fd, (void*)pdata, size);
   if (n < 0) 
@@ -194,28 +194,30 @@ int recieve_uart_data(char* pdata, int size)
   else 
   {
     pdata[n] = '\0';
-    printf("%i bytes read : %s\n", n, pdata+XBEE_OFFSET);
+    //if (n==6)
+    printf("%i bytes read : %s\n", n, pdata);
   }
 return 0;
 }
 
 void zigbee_handle (door_visio *d)
     {
-        recieve_uart_data(d->packet_from_zigbee,2);            
-        if (!strcmp(d->packet_from_zigbee,"OK"))//Porte Ouverte               
-         {             
+        recieve_uart_data(d->packet_from_zigbee,8);            
+        if (!strcmp(d->packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
+         {  
+           printf("OKOKOK\n");           
            active_led(&led_door);//Activate the open door led
            porte_ouverte();//Changing the door variable in database
            system("aplay -q /home/pi/Porte_Ouverte.wav");
          }
 
-       if (!strcmp(d->packet_from_zigbee,"FD"))//Porte Fermee
+       if (!strcmp(d->packet_from_zigbee,"DOCL"))//DOCL Porte Fermee
         {  
           stop_led(&led_door);//Desactivate the open door led
           porte_fermee();//Changing the  door variable in database
           system("aplay -q /home/pi/Porte_Fermee.wav");                        
          }       
-       if (!strcmp(d->packet_from_zigbee,"DF"))//Porte Forcee                                     
+       if (!strcmp(d->packet_from_zigbee,"DOFO"))// "DOFO" Porte Forcee                                     
         {  
           porte_forcee();//Changing the door variable in database
           system("aplay -q /home/pi/Porte_Forcee.wav");                       

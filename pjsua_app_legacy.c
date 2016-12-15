@@ -300,8 +300,8 @@ void legacy_main()
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
          
-        default:
-        printf("Nothing to do!!!\n");
+        //default:
+        //printf("Nothing to do!!!\n");
       }
    
      while ((buf_Poll[0]==48) && (!press))
@@ -340,5 +340,6 @@ void signal_handler_IO (int status)
 
    printf("Received data from XBee\n");    
    zigbee_handle (&door);
+
  }
 
