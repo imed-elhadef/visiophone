@@ -337,9 +337,10 @@ on_exit:
 
 void signal_handler_IO (int status)
  {   
-
-   printf("Received data from XBee\n");    
-   zigbee_handle (&door);
+ 
+   //printf("Received data from XBee\n");
+   recieve_uart_data(door.packet_from_zigbee,8);      
+   zigbee_handle();
 
  }
 

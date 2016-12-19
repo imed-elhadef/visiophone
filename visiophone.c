@@ -200,10 +200,10 @@ int recieve_uart_data(char* pdata, int size)
 return 0;
 }
 
-void zigbee_handle (door_visio *d)
+void zigbee_handle (void)
     {
-        recieve_uart_data(d->packet_from_zigbee,8);            
-        if (!strcmp(d->packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
+        //recieve_uart_data(door.packet_from_zigbee,8);            
+        if (!strcmp(door.packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
          {  
            printf("OKOKOK\n");           
            active_led(&led_door);//Activate the open door led
@@ -211,13 +211,13 @@ void zigbee_handle (door_visio *d)
            system("aplay -q /home/pi/Porte_Ouverte.wav");
          }
 
-       if (!strcmp(d->packet_from_zigbee,"DOCL"))//DOCL Porte Fermee
+       if (!strcmp(door.packet_from_zigbee,"DOCL"))//DOCL Porte Fermee
         {  
           stop_led(&led_door);//Desactivate the open door led
           porte_fermee();//Changing the  door variable in database
           system("aplay -q /home/pi/Porte_Fermee.wav");                        
          }       
-       if (!strcmp(d->packet_from_zigbee,"DOFO"))// "DOFO" Porte Forcee                                     
+       if (!strcmp(door.packet_from_zigbee,"DOFO"))// "DOFO" Porte Forcee                                     
         {  
           porte_forcee();//Changing the door variable in database
           system("aplay -q /home/pi/Porte_Forcee.wav");                       
