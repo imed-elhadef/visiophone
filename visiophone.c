@@ -200,10 +200,16 @@ int recieve_uart_data(char* pdata, int size)
 return 0;
 }
 
+<<<<<<< HEAD
 void zigbee_handle (/*door_visio *d*/)
     {
         //recieve_uart_data(d->packet_from_zigbee,8); 
        // printf("The value of d->packet_from_zigbee is:%s\n",door.packet_from_zigbee);            
+=======
+void zigbee_handle (void)
+    {
+        //recieve_uart_data(door.packet_from_zigbee,8);            
+>>>>>>> c4098e435b5fb3fe87e5a3a8d3d92855dff6b593
         if (!strcmp(door.packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
          {  
            printf("OKOKOK\n");           

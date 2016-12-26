@@ -85,7 +85,7 @@ typedef struct _door_visio
  {
   bool door_open;
   char packet_to_zigbee[5];
-  char packet_from_zigbee[5];
+  char packet_from_zigbee[10];
   } door_visio;
 
 typedef struct _mysql_config
