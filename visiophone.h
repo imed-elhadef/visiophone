@@ -23,9 +23,10 @@
 #include <sys/signal.h>// for signal Interruption
 #include <errno.h>
 #include <sys/poll.h> //For polling File
-//********ZigBee***********//
+//----------UART-ZigBee--------------//
 # include <termio.h>
-
+//-----------Watchdog----------------//
+#include <linux/watchdog.h>
 //---Leds variables------------//
 typedef struct _led_visio 
 {
@@ -52,12 +53,14 @@ extern bool interrupt;
 void active_led (led_visio *led);
 void stop_led(led_visio *led);
 //Button functions
-void Init_Polling_Button(void);
+int Init_Polling_Button(const char* pin_nbr);
 void Polling_Button (void);
-void Unexport_Polling_Button (void);
+void Unexport_Polling_Button (const char* pin_nbr);
 //ZigBee functions
 int init_uart_port();
 int send_uart_data(char* pdata, int size);//Send data to XBee
 int recieve_uart_data(char* pdata, int size);//receive data from XBee 
+//watchdog
+int init_watchdog(int fd, const char* dev);
 #endif
 

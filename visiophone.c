@@ -44,7 +44,6 @@ void active_led (led_visio *led)
  //SET DIRECTION
   //Open the LED's sysfs file in binary for reading and writing, store file pointer in fp
   //fn ="/sys/class/gpio/gpio26/direction";
-  printf("/sys/class/gpio/gpio%s/direction\n",led->pin_nbr);
   snprintf(led->fn_led,sizeof(led->fn_led),"/sys/class/gpio/gpio%s/direction",led->pin_nbr);
   led->fd = open(led->fn_led,O_RDWR);
 
@@ -55,7 +54,6 @@ void active_led (led_visio *led)
   printf("...direction set to output\n");
   
 //Set Value
-  printf("/sys/class/gpio/gpio%s/value\n",led->pin_nbr);
   snprintf(led->fn_led,sizeof(led->fn_led),"/sys/class/gpio/gpio%s/value",led->pin_nbr);
   //led->fn_led="/sys/class/gpio/gpio26/value";
   led->fd = open(led->fn_led,O_RDWR);
@@ -73,25 +71,26 @@ void stop_led(led_visio *led)
 
 
 
-void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button
+void Init_Polling_Button(const char* pin_nbr) //Raspberry Pi pin 16 for call button
 {
   /* export GPIO 16 */  
   fn = "/sys/class/gpio/export";
   fdbutton = open(fn, O_WRONLY); if(fdbutton < 0)  ERREXIT("open export")
-  rc = write(fdbutton, "16", 3); if(rc != 3) ERREXIT("write export")//Active-low button - Broadcom pin 16, P1 pin 36
+  rc = write(fdbutton, pin_nbr, 3); if(rc != 3) ERREXIT("write export")//Active-low button - Broadcom pin 16, P1 pin 36
   close(fdbutton);
 
   sleep(1); //---> You must add it for RPI
   /* direction */
-  
-  fn = "/sys/class/gpio/gpio16/direction";//16
+  //fn = "/sys/class/gpio/gpio16/direction";//16
+  sprintf(fn,"/sys/class/gpio/gpio%s/direction",pin_nbr);
   fdbutton = open(fn, O_RDWR);  if(fdbutton < 0)  ERREXIT("open direction")
   rc = write(fdbutton, "in", 3);if(rc != 3) ERREXIT("write direction")
   close(fdbutton);
   
   /* edge */
 
-  fn = "/sys/class/gpio/gpio16/edge";//16
+  //fn = "/sys/class/gpio/gpio16/edge";//16
+  sprintf(fn,"/sys/class/gpio/gpio%s/edge",pin_nbr);
   fdbutton = open(fn, O_RDWR);        if(fdbutton < 0)  ERREXIT("open edge")
   rc = write(fdbutton, "falling", 8); if(rc != 8) ERREXIT("write edge")
   rc = lseek(fdbutton, 0, SEEK_SET);  if(rc < 0)  ERREXIT("lseek edge")
@@ -101,7 +100,8 @@ void Init_Polling_Button(void) //Raspberry Pi pin 16 for call button
   close(fdbutton);
 
   /* wait for interrupt - try it a few times */
-  fn = "/sys/class/gpio/gpio16/value";//16
+  //fn = "/sys/class/gpio/gpio16/value";//16
+  sprintf(fn,"/sys/class/gpio/gpio%s/value",pin_nbr);
   fdbutton = open(fn, O_RDWR);  if(fdbutton < 0)  ERREXIT("open value")
   xfds[0].fd       = fdbutton;
   xfds[0].events   = POLLPRI | POLLERR;
@@ -122,12 +122,12 @@ void Polling_Button (void)
         press=0;
 }
  
- void Unexport_Polling_Button (void)
+ void Unexport_Polling_Button (const char* pin_nbr)
 {
   /* unexport GPIO 16*/ 
   fn = "/sys/class/gpio/unexport";
   fdbutton = open(fn, O_WRONLY); if(fdbutton < 0)  ERREXIT("open unexport")
-  rc = write(fdbutton, "16", 3); if(rc != 3) ERREXIT("write unexport")//16
+  rc = write(fdbutton, pin_nbr, 3); if(rc != 3) ERREXIT("write unexport")//16
   close(fdbutton);
  }
 
@@ -194,16 +194,17 @@ int recieve_uart_data(char* pdata, int size)
   else 
   {
     pdata[n] = '\0';
-    //if (n==6)
+    if (n==6)
     printf("%i bytes read : %s\n", n, pdata);
   }
 return 0;
 }
 
-void zigbee_handle (door_visio *d)
+void zigbee_handle (/*door_visio *d*/)
     {
-        recieve_uart_data(d->packet_from_zigbee,8);            
-        if (!strcmp(d->packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
+        //recieve_uart_data(d->packet_from_zigbee,8); 
+       // printf("The value of d->packet_from_zigbee is:%s\n",door.packet_from_zigbee);            
+        if (!strcmp(door.packet_from_zigbee,"DOOK"))// "DOOK" Porte Ouverte               
          {  
            printf("OKOKOK\n");           
            active_led(&led_door);//Activate the open door led
@@ -211,16 +212,55 @@ void zigbee_handle (door_visio *d)
            system("aplay -q /home/pi/Porte_Ouverte.wav");
          }
 
-       if (!strcmp(d->packet_from_zigbee,"DOCL"))//DOCL Porte Fermee
+       if (!strcmp(door.packet_from_zigbee,"DOCL"))//DOCL Porte Fermee
         {  
           stop_led(&led_door);//Desactivate the open door led
           porte_fermee();//Changing the  door variable in database
           system("aplay -q /home/pi/Porte_Fermee.wav");                        
          }       
-       if (!strcmp(d->packet_from_zigbee,"DOFO"))// "DOFO" Porte Forcee                                     
+       if (!strcmp(door.packet_from_zigbee,"DOFO"))// "DOFO" Porte Forcee                                     
         {  
           porte_forcee();//Changing the door variable in database
           system("aplay -q /home/pi/Porte_Forcee.wav");                       
          }           
   
     }
+
+//********************Watchdog*****************//
+
+int init_watchdog(int fd, const char* dev)
+{
+  int interval=10;      // Watchdog timeout interval (in secs) ---> wait 10. seconds current
+  /* Init variables */
+  
+  /* Once the watchdog device file is open, the watchdog will be activated by
+      the driver */
+   fd = open(dev, O_RDWR);
+   if (-1 == fd) {
+      printf("Unable to open device\n");
+      return 0;
+   }
+ 
+ /* If user wants to change the watchdog interval */
+   if (interval != 0) {
+      fprintf(stdout, "Set watchdog interval to %d\n", interval);
+      if (ioctl(fd, WDIOC_SETTIMEOUT, &interval) != 0) {
+         
+       printf("Set watchdog interval failed\n");
+       return 0;
+         
+      }
+   }
+
+   /* Display current watchdog interval */
+   if (ioctl(fd, WDIOC_GETTIMEOUT, &interval) == 0) {
+      fprintf(stdout, "Current watchdog interval is %d\n", interval);
+   } else {
+    
+      printf("Cannot read watchdog interval\n");
+       return 0;
+   }
+
+ return 1;
+}
+
