@@ -210,13 +210,12 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
-  int fdWatchdog;         // File handler for watchdog
-  const char *WATCHDOGDEV = "/dev/watchdog0";// Watchdog default device file  
+  //int fdWatchdog;         // File handler for watchdog
+  //const char *WATCHDOGDEV = "/dev/watchdog0";// Watchdog default device file  
   float temperature = 0;//Ambient temperature 
   const char* gpio_button="16";//Raspberry Pi pin 16 for call button --> Active-low button - Broadcom pin 16, P1 pin 36
-  //-----------Change permission for serial driver& watchdog drivers------//
+  //-----------Change permission for serial driver------//
   system("sudo chmod 666 /dev/ttyAMA0");
-  system("sudo chmod 666 /dev/watchdog0");
   //-----------Destroy RTSP Server process if running---------------//
   system("sudo pkill mjpg_streamer");
  //---------------Init Button------------//        
@@ -235,12 +234,6 @@ void legacy_main()
 	{
         perror("Unable to initilize UART XBee");
 	}
-//------------------init Watchdog -------------------//
- if (init_watchdog(fdWatchdog,WATCHDOGDEV) == 0)  
-	{
-        perror("Unable to initilize Watchdog\n");
-	return 0;
-	}  
 //---------------Init mcp9808 Temp Sensor-------------------//
   while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
@@ -250,9 +243,9 @@ void legacy_main()
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
+
     for (;;) 
     { 
-    // write(fdWatchdog, "w", 1);//Kick watchdog with any letter different to 'V' 
      Polling_Button();
      polling_normal_nfc();
      polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi, temperature)
@@ -348,15 +341,9 @@ on_exit:
 
 void signal_handler_IO (int status)
  {   
-<<<<<<< HEAD
    //printf("Received data from XBee\n");    
    recieve_uart_data(door.packet_from_zigbee,8);
    //zigbee_handle (&door);
-=======
- 
-   //printf("Received data from XBee\n");
-   recieve_uart_data(door.packet_from_zigbee,8);      
->>>>>>> c4098e435b5fb3fe87e5a3a8d3d92855dff6b593
    zigbee_handle();
 
  }
