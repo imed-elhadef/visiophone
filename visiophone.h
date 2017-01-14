@@ -25,8 +25,9 @@
 #include <sys/poll.h> //For polling File
 //----------UART-ZigBee--------------//
 # include <termio.h>
+#include <wiringPi.h> // Include WiringPi library!
 //---Leds variables------------//
-typedef struct _led_visio 
+/*typedef struct _led_visio 
 {
  int fd;
  char pin_nbr[2];
@@ -34,26 +35,32 @@ typedef struct _led_visio
 } led_visio;
 extern led_visio led_call;
 extern led_visio led_communication;
-extern led_visio led_cam;
+extern led_visio led_cam;*/
+// Pin number declarations. We're using the Broadcom chip pin numbers.
+extern const int ledcall; // Regular LED - Broadcom pin 26
+extern const int ledcommun; // Regular LED - Broadcom pin 12
+extern const int ledcam; // Regular LED - Broadcom pin 6
+extern const int leddoor; // Regular LED - Broadcom pin 5
+extern const int callbutton; // Active-low Capacitive button - Broadcom pin 16, P1 pin 36
 //--------------------------//
 //---Call button variables------------//
-struct pollfd xfds[1];
+/*struct pollfd xfds[1];
 int rc;//Poll
 char fn[34];
 char buf_Poll[4];
 extern int fdbutton;//File descriptor of the call button
-extern int press;
+extern int press;*/
 //---------------------------------------//
 extern bool interrupt;
 #define ERREXIT(str) {printf("err %s, %s\n", str, strerror(errno)); return -1;}
 
 //Leds functions
-void active_led (led_visio *led);
-void stop_led(led_visio *led);
+//void active_led (led_visio *led);
+//void stop_led(led_visio *led);
 //Button functions
-void Init_Polling_Button(const char* pin_nbr);
-void Polling_Button (void);
-void Unexport_Polling_Button (const char* pin_nbr);
+//void Init_Polling_Button(const char* pin_nbr);
+//void Polling_Button (void);
+//void Unexport_Polling_Button (const char* pin_nbr);
 //ZigBee functions
 int init_uart_port();
 int send_uart_data(char* pdata, int size);//Send data to XBee

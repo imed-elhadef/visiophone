@@ -210,20 +210,23 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
+ int press=0;
+   unsigned char write_buf[] =
+             {0x7E, 0x00, 0x19 , 0x11 , 0x01, 0x00, 0x17, 0x88, 0x01, 0x10, 0x57, 0x78, 0x7D, 0xFF, 0xFE, 0xE8, 0x0B, 0x00, 0x06, 0x01, 0x04, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x10, 0xE3};
   //int fdWatchdog;         // File handler for watchdog
   //const char *WATCHDOGDEV = "/dev/watchdog0";// Watchdog default device file  
   float temperature = 0;//Ambient temperature 
-  const char* gpio_button="16";//Raspberry Pi pin 16 for call button --> Active-low button - Broadcom pin 16, P1 pin 36
   //-----------Change permission for serial driver------//
-  system("sudo chmod 666 /dev/ttyAMA0");
+  //system("sudo chmod 666 /dev/ttyAMA0");
   //-----------Destroy RTSP Server process if running---------------//
   system("sudo pkill mjpg_streamer");
- //---------------Init Button------------//        
-  Unexport_Polling_Button(gpio_button);
-  sleep(1);//You should add it for RPI
-  Init_Polling_Button(gpio_button);
-//------Interrupt handler configuration-----//
-        saioUART.sa_handler = signal_handler_IO;
+ //---------Initialize wiringPi-----------//
+  wiringPiSetupGpio(); // Initialize wiringPi -- using Broadcom pin numbers
+ //---------------Init Leds & Call Button------------//        
+   init_visiophone_leds();
+   init_call_button();
+ //------Interrupt handler configuration-----//
+/*        saioUART.sa_handler = signal_handler_IO;
         saioUART.sa_flags = 0;
         //saioUART.sa_mask = 0; //Masquer
         //sigemptyset(&saioUART.sa_mask);
@@ -233,7 +236,7 @@ void legacy_main()
  if (init_uart_port()== 0)
 	{
         perror("Unable to initilize UART XBee");
-	}
+	}*/
 //---------------Init mcp9808 Temp Sensor-------------------//
   while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
@@ -243,10 +246,10 @@ void legacy_main()
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
+  
 
     for (;;) 
     { 
-     Polling_Button();
      polling_normal_nfc();
      polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi, temperature)
 
@@ -260,46 +263,47 @@ void legacy_main()
       read_mjpg_streamer_status(rtsp_pi);
       
       
-    /*
+    
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
-      printf("temperature in celsius: %0.2f\n", temperature);
+     // printf("temperature in celsius: %0.2f\n", temperature);
       write_temperature_to_database(temperature);  //Write to data base
-    */
+    
      
      switch(call_status)
      {
         case end_call:
+        press=0; 
         call_status=idle;
         call_history = received;
-        stop_led(&led_cam);//Closing LEDs camera
-        stop_led(&led_communication); //Close communication LED
+        digitalWrite(ledcam, LOW); // Turn cam LED OFF
+        digitalWrite(ledcommun, LOW); // Turn communication LED OFF
         write_call_type_to_database(call_history);
         sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
 
         case time_out:
+        press=0;
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led(&led_cam);//Closing LEDs camera
-        stop_led(&led_communication); //Close communication LED
+        digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/No_response.wav");
         break;
 
         case busy:
+        press=0;
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led(&led_cam);//Closing LEDs camera
-        stop_led(&led_communication); //Close communication LED
+        digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history);
 
         case reject:
+        press=0;
         call_status=idle;
         call_history=missed; //Appel en absence
-        stop_led(&led_cam);//Closing LEDs camera
-        stop_led(&led_communication); //Close communication LED
+        digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history); 
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
@@ -308,30 +312,30 @@ void legacy_main()
         printf("Nothing to do!!!\n");
       }
    
-     while ((buf_Poll[0]==48) && (!press))
+    
+    
+          while ((digitalRead(callbutton)) && (!press)) // Button is released if this returns 1
+         {
+           press=1;
+           system("aplay -q /home/pi/Appel_en_cours.wav");
+           save_call_history_to_database();//Write to data base
+           digitalWrite(ledcall, HIGH); // Turn call LED ON
 
-      {
-        press=1; 
-        printf("Test Button\n");
-        //system("aplay -q /home/pi/Appel_en_cours.wav");
-        save_call_history_to_database();//Write to data base
-        active_led(&led_call);
-
-         if (data_visio.call_direction==Unicall)
-           {
-            printf("You are in Unicall module!!!\n");
-            index_client=0;
-            ui_make_new_call();
-            }
-          if (data_visio.call_direction==Multicall)
+           if (data_visio.call_direction==Unicall)
             {
-             printf("You are in Multicall module!!!\n");
-             for(index_client=0;index_client<data_visio.client_number;index_client++)
-             ui_make_new_call();
-             usleep(200);
+              printf("You are in Unicall module!!!\n");
+              index_client=0;
+              ui_make_new_call();
              }
-        buf_Poll[0]=49;
-       }
+           if (data_visio.call_direction==Multicall)
+            {
+              printf("You are in Multicall module!!!\n");
+              for(index_client=0;index_client<data_visio.client_number;index_client++)
+              ui_make_new_call();
+              usleep(200);
+             }
+        }
+        
    	
     }//End for loop
 
@@ -341,10 +345,11 @@ on_exit:
 
 void signal_handler_IO (int status)
  {   
-   //printf("Received data from XBee\n");    
+   printf("Received data from XBee\n");    
    recieve_uart_data(door.packet_from_zigbee,8);
+   printf("Received data are:%s\n",door.packet_from_zigbee);
    //zigbee_handle (&door);
-   zigbee_handle();
+   //zigbee_handle();
 
  }
 

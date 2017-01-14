@@ -267,10 +267,10 @@ bool mcp9808_open(char *dev_fqn, int addr, struct mcp9808* e)
 	e->device_id = ((device_id & 0x00FF)<<8) | ((device_id & 0xFF00)>>8);
         
         printf("manuf_id = 0x%04x, device_id = 0x%04x\n",e->manuf_id,e->device_id);
-        /*if (e->manuf_id!=0x0054)
-        reurn false;
+        if (e->manuf_id!=0x0054)
+        return false;
 	if (e->device_id!=0x0400)
-        reurn false;*/
+        return false;
 
 	return true;
 }
@@ -296,7 +296,7 @@ float mcp9808_read_temperature(struct mcp9808 *e)
 	if(raw_temperature & 0x1000) { // check sign bit
 		temperature -= 256.0;
 	}	
-	printf("temperature: %0.2f\n",temperature);
+	//printf("temperature: %0.2f\n",temperature);
 	
 	return temperature;
  

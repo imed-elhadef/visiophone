@@ -243,14 +243,14 @@ void polling_config_value(void)
      mysql_query(conn, Querry);
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
-     printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
-     printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
-     printf("%d\n",atoi(row[7]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
+     //printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
+     //printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
+     //printf("%d\n",atoi(row[7]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
      if(atoi(row[2]))
      config_visiophone=true; 
      if(atoi(row[6]))
      door.door_open/*open_door*/=true;
-     printf("pjpg_streamer value:%d\n",atoi(row[8]));
+    // printf("pjpg_streamer value:%d\n",atoi(row[8]));
      if(atoi(row[7]) == 2)
      rtsp_pi=2;
      else if (atoi(row[7]) == 1)
@@ -335,15 +335,15 @@ void read_mjpg_streamer_status (int mjpg_status)
       write_mjpg_status_to_database();  
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
       }
-      else 
-       printf("mjpg_streamer in idle state!!!");
+      /*else 
+       printf("mjpg_streamer in idle state!!!");*/
    }
 //********************Write infos to data base*****************//
  void write_temperature_to_database(float t)
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%d'",t,prefix); 
+     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%f'",prefix,t); 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
