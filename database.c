@@ -11,8 +11,9 @@
  *                                                                         *
  ***************************************************************************/
 #include "database.h"
+extern int press;
 mysql_config mysql_conf ={.server="localhost",.user="root",.password="arcangel",.database="visiophone"};
-door_visio door = {false,"OPEN",""};//Par défaut la porte est fermée 
+door_visio door = {false,"PXX","","",""};//Par défaut la porte est fermée 
 static int badge_number=0;//Nombre des badges dans la base de données
 bool config_visiophone=false;//L'interphone fonctionne par défaut en "Mode Normale" --> Mode Normale=0 Mode Config=1
 short int rtsp_pi=0;//Par défaut le serveur mjpg_streamer de la camera Rpi2 ne fonctionne plus
@@ -32,9 +33,6 @@ const size_t szModulations = 1;//2;
 nfc_target nt;
 int result = 0;
 //-------------------ZigBee-------------------//
-char buffer_send[5];
-// Read up to 24 characters from the port if they are there
-//char buf[24];
 //******************NFC************************//
 void nfc_start(void)
 {
@@ -92,9 +90,7 @@ void normal_nfc_target(const nfc_target *pnt, bool verbose)
            if (strncmp(NFC[i],UID,14) == 0)
              {
               printf("Test Good\n");
-              //strcpy(buffer_send,"OPEN");// "OPEN" Ouverture de la porte (A voir)
-              strcpy(buffer_send,door.packet_to_zigbee);// "OPEN" Ouverture de la porte (A voir)
-              send_uart_data(buffer_send,sizeof(buffer_send));
+              send_uart_data(door.data_to_serrure,sizeof(door.data_to_serrure));// "PXX" Ouverture de la porte dois commencer par la lettre 'P'
               break;
              } 
           }
@@ -243,14 +239,14 @@ void polling_config_value(void)
      mysql_query(conn, Querry);
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
-     printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
-     printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
-     printf("%d\n",atoi(row[7]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
+     //printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
+     //printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
+     //printf("%d\n",atoi(row[7]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
      if(atoi(row[2]))
      config_visiophone=true; 
      if(atoi(row[6]))
      door.door_open/*open_door*/=true;
-     printf("pjpg_streamer value:%d\n",atoi(row[8]));
+    // printf("pjpg_streamer value:%d\n",atoi(row[8]));
      if(atoi(row[7]) == 2)
      rtsp_pi=2;
      else if (atoi(row[7]) == 1)
@@ -272,8 +268,7 @@ void polling_config_value(void)
        //write_door_status_to_database();//Write to data base
        index=false;  
        printf("Opening the door!!!\n");
-       strcpy(buffer_send,d->packet_to_zigbee);// "OPEN" Ouverture de la porte (A voir la trame par la suite)
-       send_uart_data(buffer_send,sizeof(buffer_send));
+       send_uart_data(d->data_to_serrure,sizeof(d->data_to_serrure));
        }
    else if ((d->door_open) && (!index))
     printf("The door is already opened!!!\n");
@@ -335,15 +330,15 @@ void read_mjpg_streamer_status (int mjpg_status)
       write_mjpg_status_to_database();  
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
       }
-      else 
-       printf("mjpg_streamer in idle state!!!");
+      /*else 
+       printf("mjpg_streamer in idle state!!!");*/
    }
 //********************Write infos to data base*****************//
  void write_temperature_to_database(float t)
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%d'",t,prefix); 
+     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%f'",prefix,t); 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -397,6 +392,7 @@ void write_mjpg_status_to_database()
 
  void save_call_history_to_database()
   {
+        press=0; 
         int row_nbr = 0;
         //Enregistrement des appels dans la base de données
         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);

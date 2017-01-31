@@ -84,9 +84,12 @@ typedef struct _database_visio
 typedef struct _door_visio
  {
   bool door_open;
-  char packet_to_zigbee[5];
-  char packet_from_zigbee[10];
+  char data_to_serrure[4];
+  char config_to_serrure[124];
+  char data_from_serrure[8];
+  char config_from_serrure[124];
   } door_visio;
+
 
 typedef struct _mysql_config
   {
