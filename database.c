@@ -233,11 +233,19 @@ void polling_config_value(void)
    //  mysql_query(conn, "SELECT * FROM parametre_visio"); //False --> Mode Normale   TRUE --> Mode config      
      mysql_query(conn, "SELECT * FROM parametre_visio");
      res = mysql_store_result(conn); 
-     row = mysql_fetch_row(res);        
+     row = mysql_fetch_row(res);
+      
+     /*Config Mode*/   
      if(atoi(row[2]))//mode_conf_visio
-     config_visiophone=true; 
-     if(atoi(row[6]))// ouvrir_porte_visio
+     config_visiophone=true;
+
+     /* Door status*/ 
+     if(atoi(row[6]))// Open the door
      door.door_open=true;
+     else 
+     door.door_open=false;
+     
+     /*Mjpg Streamer*/
      if(atoi(row[11]) == 2)//pjpg_streamer
      rtsp_pi=2;
      else if (atoi(row[11]) == 1)
@@ -255,7 +263,7 @@ void polling_config_value(void)
    if ((d->door_open) && (open_index)) //Check the open door variable
       {
        d->door_open=false;         
-       reset_door_in_database();//Write to data base
+       reset_door_in_database();//Write zero to data base
        open_index=false;  
        printf("Opening the door!!!\n");
        send_uart_data(d->data_to_serrure,sizeof(d->data_to_serrure));
@@ -301,7 +309,19 @@ int read_mjpg_streamer_status (int mjpg_status)
      {
        /*Activating the mjpg_streamer!!!*/
        j=true;
-       system("/etc/init.d/mjpg-streamer.sh");// Activating the mjpg_streamer server
+       pid=fork();//Creating a child process
+       if(pid<0)
+         {
+          printf("\n Error ");
+          exit(1);
+         }
+       else if(pid==0)
+         {
+          //printf("\n Hello I am the child process ");
+          system("/etc/init.d/mjpg-streamer.sh");// Activating the mjpg_streamer server
+         }
+        /*else
+          printf("\n Hello I am the parent process ");*/
        return 1;
      }
    else if (mjpg_status==1)
@@ -335,7 +355,7 @@ int read_mjpg_streamer_status (int mjpg_status)
       if (mysql_query(conn, "UPDATE parametre_visio SET ouvrir_porte_visio = '0'"))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
-      }           
+      }          
   } 
 
 void write_door_status_in_database(t_door_status status)
@@ -351,6 +371,7 @@ void write_door_status_in_database(t_door_status status)
      free(Querry);
      Querry=NULL;          
   } 
+
 
 void write_mjpg_status_to_database()
   { 
