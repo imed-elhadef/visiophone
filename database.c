@@ -11,7 +11,8 @@
  *                                                                         *
  ***************************************************************************/
 #include "database.h"
-extern int press;
+#include "visiophone.h"
+bool open_index=true;
 mysql_config mysql_conf ={.server="localhost",.user="root",.password="arcangel",.database="visiophone"};
 door_visio door = {false,"PXX","","",""};//Par défaut la porte est fermée 
 static int badge_number=0;//Nombre des badges dans la base de données
@@ -120,7 +121,6 @@ int config_nfc_target(const nfc_target *pnt, bool verbose)
 //*****************Data Base*************//
 int read_from_database(database_visio *data_visio)
 {    
-   char *Querry1 = (char*)malloc(OFFSET_QUERRY_PREFIX); 
    char *Querry2 = (char*)malloc(OFFSET_QUERRY_RECEPTEUR);      
    //Connect to database
    conn = mysql_init(NULL);
@@ -145,9 +145,8 @@ int read_from_database(database_visio *data_visio)
   printf("The prefix is:%s\n",prefix);
  
 
-   //Lecture dans la base de données des paramètres Visiophone
-   sprintf(Querry1, "SELECT * FROM %s_parametre_visio",prefix); 
-   if (mysql_query(conn, Querry1))
+   //Lecture dans la base de données des paramètres Visiophone 
+   if (mysql_query(conn, "SELECT * FROM parametre_visio"))
    {
       fprintf(stderr, "%s\n", mysql_error(conn));
       return 0;
@@ -220,9 +219,7 @@ int read_from_database(database_visio *data_visio)
   else
   data_visio->call_direction=Multicall;
   
-  free(Querry1); //Libérer la mémoire
   free(Querry2); //Libérer la mémoire
-  Querry1 = NULL;
   Querry2 = NULL;
   //Disconnect from Data Base
    mysql_free_result(res);
@@ -233,112 +230,96 @@ int read_from_database(database_visio *data_visio)
 void polling_config_value(void)
 {
  //Lecture dans la base de données de la paramètre config
-   //  mysql_query(conn, "SELECT * FROM parametre_visio"); //False --> Mode Normale   TRUE --> Mode config 
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);    
-     sprintf(Querry, "SELECT * FROM %s_parametre_visio",prefix); 
-     mysql_query(conn, Querry);
+   //  mysql_query(conn, "SELECT * FROM parametre_visio"); //False --> Mode Normale   TRUE --> Mode config      
+     mysql_query(conn, "SELECT * FROM parametre_visio");
      res = mysql_store_result(conn); 
      row = mysql_fetch_row(res);        
-     //printf("%d\n",atoi(row[2]));//Column mode_conf_visiophone --> Pour sélectionner mode config et mode normale
-     //printf("%d\n",atoi(row[6]));//Column ouvrir_porte_visio --> Detecte si la porte est ouverte ou fermée
-     //printf("%d\n",atoi(row[7]));//Ajouter un nouveau champ pour la camera rtsp nommé "mjpg_streamer"
-     if(atoi(row[2]))
+     if(atoi(row[2]))//mode_conf_visio
      config_visiophone=true; 
-     if(atoi(row[6]))
-     door.door_open/*open_door*/=true;
-    // printf("pjpg_streamer value:%d\n",atoi(row[8]));
-     if(atoi(row[7]) == 2)
+     if(atoi(row[6]))// ouvrir_porte_visio
+     door.door_open=true;
+     if(atoi(row[11]) == 2)//pjpg_streamer
      rtsp_pi=2;
-     else if (atoi(row[7]) == 1)
+     else if (atoi(row[11]) == 1)
      rtsp_pi=1;
      else      
      rtsp_pi=0;  
-     free(Querry);   
-   //Disconnect from Data Base
+    //Disconnect from Data Base
      mysql_free_result(res);
   }
 
 //********************Acess Door functions******************//
  void read_door_status(door_visio *d)
  {
-   static bool index=true;
-   if ((d->door_open) && (index)) //Check the open door variable
+  // if (d->door_open) //Check the open door variable
+   if ((d->door_open) && (open_index)) //Check the open door variable
       {
-       //door_var=FALSE;           
+       d->door_open=false;         
        //write_door_status_to_database();//Write to data base
-       index=false;  
+       open_index=false;  
        printf("Opening the door!!!\n");
        send_uart_data(d->data_to_serrure,sizeof(d->data_to_serrure));
        }
-   else if ((d->door_open) && (!index))
-    printf("The door is already opened!!!\n");
+  /* else if (!open_index)
+     printf("The door is already opened!!!\n"); //----> Mettre message sonore*/
      
   }
 
-void porte_fermee()
-{
-     //Ecriture dans la base de données    
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '0'",prefix); //Write 0 for closed door
-     if (mysql_query(conn, Querry))
-     {
-       fprintf(stderr, "%s\n", mysql_error(conn));
-      } 
-
-       //---------------Fin Ecriture-----------------//
-     free(Querry);
-     Querry=NULL;
-}
-
-void porte_ouverte()
-{
-     //Ecriture dans la base de données   
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '1'",prefix); //Write 1 for opened door
-     if (mysql_query(conn, Querry))
-      {
-        fprintf(stderr, "%s\n", mysql_error(conn));
-      } 
-       //---------------Fin Ecriture-----------------//
-     free(Querry);
-     Querry=NULL;
-}
-
- void porte_forcee()
+ void status_door_history (t_door_status status) 
   {
+    int row_nbr=0;
     //Ecriture dans la base de données   
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_porte_visio SET etat_porte_visio = '2'",prefix); //Write 2 for forced door 
-     if (mysql_query(conn, Querry))
+      char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);
+      char *Querry2 = (char*) malloc(OFFSET_QUERRY_PREFIX);    
+      sprintf(Querry1, "INSERT INTO %s_porte_visio (id_porte_visio,time_porte_visio,etat_porte_visio) VALUES('','%s','%d')",prefix,get_current_time(),status);
+     if (mysql_query(conn, Querry1))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
       } 
-       //---------------Fin Ecriture-----------------//
-     free(Querry);
-     Querry=NULL;
+      sprintf(Querry2, "SELECT * FROM %s_porte_visio",prefix);
+      mysql_query(conn, Querry2);
+      res = mysql_store_result(conn);
+      row_nbr = mysql_num_rows(res);
+
+      if (row_nbr == 101)//Maximum d'historique 100
+       {
+        sprintf(Querry2, "TRUNCATE TABLE %s_porte_visio",prefix); 
+        mysql_query(conn, Querry2);
+       }
+        
+        free(Querry1);//Free Allocated Memory
+        free(Querry2);
+        Querry1=NULL;
+        Querry2=NULL;
   }
 //********************Mjpg Streamer*********************//
-void read_mjpg_streamer_status (int mjpg_status)
+int read_mjpg_streamer_status (int mjpg_status)
  {
-  if (mjpg_status==2) //Check the mjpg rpi server variable
-       {
-       printf("Activating the mjpg_streamer!!!\n");
-       system("/etc/init.d/mjpg-streamer.sh");
-       }
-     else if (mjpg_status==1)
-      {
-      write_mjpg_status_to_database();  
+  static bool j=false;
+  int pid;
+   if ((mjpg_status==2) && (!j)) //Check the mjpg rpi server variable
+     {
+       /*Activating the mjpg_streamer!!!*/
+       j=true;
+       system("/etc/init.d/mjpg-streamer.sh");// Activating the mjpg_streamer server
+       return 1;
+     }
+   else if (mjpg_status==1)
+    {
+      write_mjpg_status_to_database();
+      j=false;  
       system("sudo pkill mjpg_streamer");//Destroy rpi rtsp flux
-      }
-      /*else 
-       printf("mjpg_streamer in idle state!!!");*/
-   }
+      return 1;
+    }
+
+  return 0;
+ }
 //********************Write infos to data base*****************//
  void write_temperature_to_database(float t)
   {
     //Ecriture dans la base de données   
      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET temperature = '%f'",prefix,t); 
+     sprintf(Querry, "UPDATE parametre_visio SET temperature = '%f'",t); 
      if (mysql_query(conn, Querry))
       {
        fprintf(stderr, "%s\n", mysql_error(conn));
@@ -351,29 +332,21 @@ void read_mjpg_streamer_status (int mjpg_status)
  void write_door_status_to_database()
   { 
      //Ecriture dans la base de données
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET ouvrir_porte_visio = '0'",prefix);
-      if (mysql_query(conn, Querry))
+      if (mysql_query(conn, "UPDATE parametre_visio SET ouvrir_porte_visio = '0'"))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
       } 
-       //---------------Fin Ecriture-----------------//
-       free(Querry);//Free the allocated memory 
-       Querry=NULL;    
+          
   } 
 
 void write_mjpg_status_to_database()
   { 
      //Ecriture dans la base de données
-     char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX);   
-     sprintf(Querry, "UPDATE %s_parametre_visio SET mjpg_streamer = '0'",prefix);
-      if (mysql_query(conn, Querry))
+      if (mysql_query(conn, "UPDATE parametre_visio SET mjpg_streamer = '0'"))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
       } 
-       //---------------Fin Ecriture-----------------//
-       free(Querry);//Free the allocated memory 
-       Querry=NULL;    
+         
   } 
  
  void write_call_type_to_database(t_call_type history)
@@ -392,7 +365,6 @@ void write_mjpg_status_to_database()
 
  void save_call_history_to_database()
   {
-        press=0; 
         int row_nbr = 0;
         //Enregistrement des appels dans la base de données
         char *Querry1 = (char*) malloc(OFFSET_QUERRY_APPEL);

@@ -25,8 +25,6 @@
 #include "visiophone.h"
 #include "database.h"
 #include "MCP9808.h" 
-int press=0;
-bool interrupt;
 //------------Imed Variables--------------//
 //--------------mcp9808 Temp Sensor Data--------//
 static const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
@@ -212,14 +210,13 @@ static void ui_make_new_call()
  */
 void legacy_main()
 {
-   //int press=0;
+   int press=0;//Call button variable
+   int byte_nbr=0;
    unsigned char write_buf[] =
              {0x7E, 0x00, 0x19 , 0x11 , 0x01, 0x00, 0x17, 0x88, 0x01, 0x10, 0x57, 0x78, 0x7D, 0xFF, 0xFE, 0xE8, 0x0B, 0x00, 0x06, 0x01, 0x04, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x10, 0xE3};
   //int fdWatchdog;         // File handler for watchdog
   //const char *WATCHDOGDEV = "/dev/watchdog0";// Watchdog default device file  
   float temperature = 0;//Ambient temperature 
-  //-----------Change permission for serial driver------//
-  //system("sudo chmod 666 /dev/ttyAMA0");
   //-----------Destroy RTSP Server process if running---------------//
   system("sudo pkill mjpg_streamer");
  //---------Initialize wiringPi-----------//
@@ -248,8 +245,6 @@ void legacy_main()
 //-------------------NFC Start-------------------//
  nfc_start();
 //------------------------------------------------------//
-  
-
     for (;;) 
     { 
      polling_normal_nfc();
@@ -263,16 +258,17 @@ void legacy_main()
       
       read_door_status(&door);
       read_mjpg_streamer_status(rtsp_pi);
-      
-      
+       
     
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
-     // printf("temperature in celsius: %0.2f\n", temperature);
       write_temperature_to_database(temperature);  //Write to data base
 
-    /* recieve_uart_data(door.packet_from_zigbee,sizeof(door.packet_from_zigbee));
-     printf("Received data are:%s\n",door.packet_from_zigbee);
-     memset(door.packet_from_zigbee,0,sizeof(door.packet_from_zigbee));*/
+      byte_nbr=receive_uart_data(door.data_from_serrure,sizeof(door.data_from_serrure));
+      if(byte_nbr==7)
+      {
+       byte_nbr=0;
+       zigbee_handle();
+      }
     
      
      switch(call_status)
@@ -314,23 +310,27 @@ void legacy_main()
         sleep(3);
         system("aplay -q /home/pi/Call_reject.wav");
          
-        //default:
-        printf("Nothing to do!!!\n");
+        default:
+        press=0;
+        call_status=idle;
+        digitalWrite(ledcall, LOW); // Turn call LED OFF
+        //sleep(3);
+        //system("aplay -q /home/pi/unavailable_service.wav");//Unavailable service 
+        
+        //printf("Nothing to do!!!\n");
       }
    
     
     
           while ((digitalRead(callbutton)) && (!press)) // Button is released if this returns 1
          {
-           char buffer[]="PA"; 
            press=1;              
            system("aplay -q /home/pi/Appel_en_cours.wav");
-           //save_call_history_to_database();//Write to data base
            digitalWrite(ledcall, HIGH); // Turn call LED ON
-           send_uart_data(buffer,sizeof(buffer));
            save_call_history_to_database();//Write to data base
+           send_uart_data(door.data_to_serrure,sizeof(door.data_to_serrure));
 
-/*           if (data_visio.call_direction==Unicall)
+           if (data_visio.call_direction==Unicall)
             {
               printf("You are in Unicall module!!!\n");
               index_client=0;
@@ -342,7 +342,7 @@ void legacy_main()
               for(index_client=0;index_client<data_visio.client_number;index_client++)
               ui_make_new_call();
               usleep(200);
-             }*/
+             }
         }
         
    	

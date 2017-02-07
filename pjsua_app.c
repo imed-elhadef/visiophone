@@ -1,8 +1,8 @@
 /* $Id: pjsua_app.c 5149 2015-08-06 07:10:33Z nanang $ */
 /* 
+ * Copyright (C) 2014-2016 Imed Elhadef "Arcangel Technologies" <imed.elhadef@arcangel.fr>
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
- * Copyright (C) 2016 Imed Elhadef <imed.elhadef@arcangel.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -293,13 +293,19 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %s", 
 		      call_id,
 		      call_info.state_text.ptr));
+                      printf("You are here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                       
-                      stop_led(&led_call);//New Imed
-                      if (led_communication.fd<0)//New Imed
-                      active_led(&led_communication);//New Imed
-                      if (led_cam.fd<0)//New Imed
-                      active_led(&led_cam);//New Imed
-    
+                      if (!strcmp(call_info.state_text.ptr,"CALLING"))
+                        {
+                        digitalWrite(ledcommun, LOW); // Turn communication LED ON //Imed 
+                        digitalWrite(ledcam, LOW); // Turn camera LED ON //Imed
+                        }
+                      else
+                       {
+                        digitalWrite(ledcall, LOW); // Turn communication LED OFF //Imed
+                        digitalWrite(ledcommun, HIGH); // Turn communication LED ON //Imed 
+                        digitalWrite(ledcam, HIGH); // Turn camera LED ON //Imed
+                       }
 	}
 
 	if (current_call==PJSUA_INVALID_ID)
