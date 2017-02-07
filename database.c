@@ -255,7 +255,7 @@ void polling_config_value(void)
    if ((d->door_open) && (open_index)) //Check the open door variable
       {
        d->door_open=false;         
-       write_door_status_to_database();//Write to data base
+       reset_door_in_database();//Write to data base
        open_index=false;  
        printf("Opening the door!!!\n");
        send_uart_data(d->data_to_serrure,sizeof(d->data_to_serrure));
@@ -329,7 +329,7 @@ int read_mjpg_streamer_status (int mjpg_status)
      Querry=NULL;
   } 
  
- void write_door_status_to_database()
+ void reset_door_in_database()
   { 
      //Ecriture dans la base de données
       if (mysql_query(conn, "UPDATE parametre_visio SET ouvrir_porte_visio = '0'"))

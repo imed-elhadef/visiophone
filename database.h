@@ -131,7 +131,7 @@ void polling_config_value(void);
 //Write infos to data base
 //void status_door_history(t_door_status status); 
 void write_temperature_to_database(float t);
-void write_door_status_to_database(void);
+void reset_door_in_database(void);
 void write_mjpg_status_to_database(void);
 void write_call_type_to_database(t_call_type history);
 void save_call_history_to_database(void);
