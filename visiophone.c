@@ -105,6 +105,7 @@ void zigbee_handle()
          {  
            digitalWrite(leddoor, HIGH); // Turn door LED ON
            status_door_history(open_data.status);//Changing the door variable to 1 in database
+           write_door_status_in_database(open_data.status);//Changing the  door variable to 2 in parametre_visio table
            system(open_data.path);
          }
 
@@ -112,7 +113,8 @@ void zigbee_handle()
         {  
           digitalWrite(leddoor, LOW); // Turn door LED OFF 
           status_door_history(close_data.status);//Changing the  door variable to 0 in database
-          open_index=true;  
+          open_index=true; 
+          write_door_status_in_database(close_data.status);//Changing the  door variable to 2 in parametre_visio table 
           system(close_data.path);                        
          }       
        if (!strcmp(door.data_from_serrure,force_data.zigbee_data))// "FORCED" Porte Forcee                                     
@@ -121,6 +123,7 @@ void zigbee_handle()
           usleep(5000);
           digitalWrite(leddoor, LOW); // Turn door LED OFF 
           status_door_history(force_data.status);//Changing the  door variable to 2 in database
+          write_door_status_in_database(force_data.status);//Changing the  door variable to 2 in parametre_visio table
           system(force_data.path);                       
          }           
   

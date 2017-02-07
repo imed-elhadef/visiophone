@@ -335,8 +335,21 @@ int read_mjpg_streamer_status (int mjpg_status)
       if (mysql_query(conn, "UPDATE parametre_visio SET ouvrir_porte_visio = '0'"))
      {
        fprintf(stderr, "%s\n", mysql_error(conn));
+      }           
+  } 
+
+void write_door_status_in_database(t_door_status status)
+  { 
+     //Ecriture dans la base de données
+      char *Querry = (char*) malloc(OFFSET_QUERRY_PREFIX); 
+     sprintf(Querry, "UPDATE parametre_visio SET door_status  = '%d'",status); 
+     if (mysql_query(conn, Querry))
+      {
+       fprintf(stderr, "%s\n", mysql_error(conn));
       } 
-          
+       //---------------Fin Ecriture-----------------//
+     free(Querry);
+     Querry=NULL;          
   } 
 
 void write_mjpg_status_to_database()

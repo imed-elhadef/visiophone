@@ -137,6 +137,7 @@ void write_call_type_to_database(t_call_type history);
 void save_call_history_to_database(void);
 int read_mjpg_streamer_status (int mjpg_status);
 void read_door_status(door_visio *d);
+void write_door_status_in_database(t_door_status status);
 
 #endif
 
