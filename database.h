@@ -35,6 +35,7 @@
 #include <nfc/nfc.h>
 #include <nfc/nfc-types.h>
 #include "nfc-utils.h"
+#include "visiophone.h"
 //-----------MySQL--------------//
 //#define OFFSET_QUERRY 64
 #define OFFSET_QUERRY_APPEL 168
@@ -71,6 +72,9 @@ typedef enum call_type
  none
  } t_call_type;
 
+
+
+
 typedef struct _database_visio
  {
  // char prefix[5];//Prefix du compte admin visio
@@ -83,7 +87,8 @@ typedef struct _database_visio
 
 typedef struct _door_visio
  {
-  bool door_open;
+  //bool door_open;
+  t_door_status status;
   char data_to_serrure[4];
   char config_to_serrure[124];
   char data_from_serrure[8];
@@ -113,6 +118,7 @@ char sip_client_name[CLIENT_NUMBER][SIZE_CLIENT_NAME];//Le nom des équipements 
 char ip_adress[16];
 char prefix[5];//Prefix du compte admin visio
 
+extern bool open_index;
 extern t_call_status call_status;
 extern door_visio door;
 extern bool config_visiophone;
@@ -123,12 +129,13 @@ int config_nfc_target(const nfc_target *pnt, bool verbose);
 int read_from_database(database_visio *data_visio);
 void polling_config_value(void);
 //Write infos to data base
+//void status_door_history(t_door_status status); 
 void write_temperature_to_database(float t);
 void write_door_status_to_database(void);
 void write_mjpg_status_to_database(void);
 void write_call_type_to_database(t_call_type history);
 void save_call_history_to_database(void);
-void read_mjpg_streamer_status (int mjpg_status);
+int read_mjpg_streamer_status (int mjpg_status);
 void read_door_status(door_visio *d);
 
 #endif
