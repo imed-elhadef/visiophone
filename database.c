@@ -255,7 +255,7 @@ void polling_config_value(void)
    if ((d->door_open) && (open_index)) //Check the open door variable
       {
        d->door_open=false;         
-       //write_door_status_to_database();//Write to data base
+       write_door_status_to_database();//Write to data base
        open_index=false;  
        printf("Opening the door!!!\n");
        send_uart_data(d->data_to_serrure,sizeof(d->data_to_serrure));

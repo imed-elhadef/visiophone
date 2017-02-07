@@ -87,8 +87,8 @@ typedef struct _database_visio
 
 typedef struct _door_visio
  {
-  //bool door_open;
-  t_door_status status;
+  bool door_open;
+  //t_door_status status;
   char data_to_serrure[4];
   char config_to_serrure[124];
   char data_from_serrure[8];

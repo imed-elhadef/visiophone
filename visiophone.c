@@ -112,7 +112,6 @@ void zigbee_handle()
         {  
           digitalWrite(leddoor, LOW); // Turn door LED OFF 
           status_door_history(close_data.status);//Changing the  door variable to 0 in database
-          write_door_status_to_database();//Write to data base ouvrir_porte_visio = false
           open_index=true;  
           system(close_data.path);                        
          }       
