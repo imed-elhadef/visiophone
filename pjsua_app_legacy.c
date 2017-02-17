@@ -25,7 +25,9 @@
 #include "visiophone.h"
 #include "database.h"
 #include "MCP9808.h" 
+#include <linux/watchdog.h>
 //------------Imed Variables--------------//
+static int byte_nbr=0;
 //--------------mcp9808 Temp Sensor Data--------//
 static const char* I2CDEV = "/dev/i2c-1"; //i2c-1 pour Raspberry
 struct mcp9808 temp_sensor;
@@ -36,7 +38,9 @@ struct sigaction saioUART; // definition of signal action
 static int index_client=0;
 t_call_type call_history;
 database_visio data_visio = {"",0,0,None,NULL};
-
+//-----------Watchdog-----------//
+int fd_watch=-1;
+char* watch_dev="/dev/watchdog";
 
 #define THIS_FILE	"pjsua_app_legacy.c"
 /* An attempt to avoid stdout buffering for python tests:
@@ -63,6 +67,21 @@ static pj_bool_t	cmd_echo;
   return asctime (timeinfo);
   //printf ( "Current local time and date: %s", asctime (timeinfo) );
   }
+
+//--------------------Watchdog-------------//
+int init_watchdog(void)
+  {
+    int timeout = 7;
+    if ((fd_watch = open(watch_dev, O_WRONLY)) <=0)
+        {
+                fprintf(stderr, "Error opening watchdog! %s \n", strerror(errno));
+                return 0;
+        }
+       ioctl(fd_watch, WDIOC_SETTIMEOUT, &timeout);
+       printf("The watchdog timeout is %d seconds.\n\n", timeout);
+    return 1;   
+   }
+//----------------------------------------------------//
 
 /*
  * Print buddy list.
@@ -211,12 +230,12 @@ static void ui_make_new_call()
 void legacy_main()
 {
    int press=0;//Call button variable
-   int byte_nbr=0;
+  // int byte_nbr=0;
    unsigned char write_buf[] =
              {0x7E, 0x00, 0x19 , 0x11 , 0x01, 0x00, 0x17, 0x88, 0x01, 0x10, 0x57, 0x78, 0x7D, 0xFF, 0xFE, 0xE8, 0x0B, 0x00, 0x06, 0x01, 0x04, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x10, 0xE3};
-  //int fdWatchdog;         // File handler for watchdog
-  //const char *WATCHDOGDEV = "/dev/watchdog0";// Watchdog default device file  
   float temperature = 0;//Ambient temperature 
+  //----------Change permission of watchdog file--------//
+   system("sudo chmod 777 /dev/watchdog");
   //-----------Destroy RTSP Server process if running---------------//
   system("sudo pkill mjpg_streamer");
  //---------Initialize wiringPi-----------//
@@ -225,17 +244,22 @@ void legacy_main()
    init_visiophone_leds();
    init_call_button();
  //------Interrupt handler configuration-----//
-      /*  saioUART.sa_handler = signal_handler_IO;
+        saioUART.sa_handler = signal_handler_IO;
         saioUART.sa_flags = 0;
         //saioUART.sa_mask = 0; //Masquer
         //sigemptyset(&saioUART.sa_mask);
         saioUART.sa_restorer = NULL; 
-        sigaction(SIGIO,&saioUART,NULL);*/
+        sigaction(SIGIO,&saioUART,NULL);
 //----------------Init XBee Module------------------------//
  if (init_uart_port()== 0)
 	{
         perror("Unable to initilize UART XBee");
 	}
+//-----------------Init watchdog---------//
+  /* if (init_watchdog()== 0)
+	{
+        perror("Unable to initilize watchdog");
+	}*/
 //---------------Init mcp9808 Temp Sensor-------------------//
   while (!mcp9808_open(I2CDEV, MCP9808_ADR, &temp_sensor))
   printf ("Device checked with sucess!!!\n");
@@ -247,6 +271,7 @@ void legacy_main()
 //------------------------------------------------------//
     for (;;) 
     { 
+     //write(fd_watch, "\0", 1);
      polling_normal_nfc();
      polling_config_value();//Poll les différents variables de config (config_visiophone,open_door et rtsp_pi, temperature)
 
@@ -263,9 +288,14 @@ void legacy_main()
       temperature = mcp9808_read_temperature(&temp_sensor);//Read the ambient temperature from mcp9880
       write_temperature_to_database(temperature);  //Write to data base
 
-      byte_nbr=receive_uart_data(door.data_from_serrure,sizeof(door.data_from_serrure));
+      /*byte_nbr=receive_uart_data(door.data_from_serrure,sizeof(door.data_from_serrure));
       if(byte_nbr==7)
       {
+       byte_nbr=0;
+       zigbee_handle();
+      }*/
+      while(byte_nbr==7)
+      { 
        byte_nbr=0;
        zigbee_handle();
       }
@@ -352,11 +382,14 @@ on_exit:
     ;
 }
 
-/*void signal_handler_IO (int status)
+void signal_handler_IO (int status)
  {     
-   printf("Received data from XBee\n"); 
-   recieve_uart_data(door.packet_from_zigbee,sizeof(door.packet_from_zigbee));
-   printf("Received data are:%s\n",door.packet_from_zigbee);
-   zigbee_handle();
- }*/
-
+     // printf("Test1");
+      byte_nbr=receive_uart_data(door.data_from_serrure,sizeof(door.data_from_serrure));
+     /* if(byte_nbr==7)
+      { 
+       printf("Test2");
+       zigbee_handle();
+       printf("Test3");
+      }*/
+}
