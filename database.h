@@ -54,6 +54,7 @@ typedef enum call_status
  end_call,
  time_out,
  busy,
+ not_found,
  idle
 } t_call_status;
 
@@ -72,9 +73,6 @@ typedef enum call_type
  none
  } t_call_type;
 
-
-
-
 typedef struct _database_visio
  {
  // char prefix[5];//Prefix du compte admin visio
@@ -82,7 +80,6 @@ typedef struct _database_visio
   int client_number; //Le nombre des clients à appeler
   t_call_direction call_direction;//enum type
   char sip_client_address[CLIENT_NUMBER][SIZE_CLIENT_ADDRESS];//L'addresse complète des équipements à appeler
-
   } database_visio;
 
 typedef struct _door_visio
@@ -107,9 +104,7 @@ typedef struct _mysql_config
 MYSQL *conn;
 MYSQL_RES *res;
 MYSQL_ROW row;
-//-----------NFC---------------//
-#define OFFSET 85
-nfc_context *context;
+
 //Base de Donnees NFC
  char NFC[NFC_NUMBER][SIZE_STRING_NFC]; //Les IDs des badges NFC
  char UID[15];

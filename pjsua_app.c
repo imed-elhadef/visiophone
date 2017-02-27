@@ -218,9 +218,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 //200 -----> Normal end of call
 //408 -----> Time Out
 //468 -----> Busy
+//404 -----> Not found
         if (call_info.last_status ==408)  
            call_status=time_out;
-
 
         if (call_info.last_status ==200)  
            call_status=end_call;
@@ -229,7 +229,11 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
            call_status=reject;
          
         if (call_info.last_status ==468)   
-           call_status=busy;        
+           call_status=busy;
+        
+        if (call_info.last_status ==404)   
+           call_status=not_found;        
+
 //-------------------End Imed Modif------------------------//
 
 
@@ -293,7 +297,6 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %s", 
 		      call_id,
 		      call_info.state_text.ptr));
-                      printf("You are here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                       
                       if (!strcmp(call_info.state_text.ptr,"CALLING"))
                         {

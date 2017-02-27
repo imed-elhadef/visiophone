@@ -310,7 +310,8 @@ void legacy_main()
         digitalWrite(ledcam, LOW); // Turn cam LED OFF
         digitalWrite(ledcommun, LOW); // Turn communication LED OFF
         write_call_type_to_database(call_history);
-        sleep(3); 
+        sleep(3);
+        //sleep(2); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
 
@@ -319,8 +320,10 @@ void legacy_main()
         call_status=idle;
         call_history=missed; //Appel en absence
         digitalWrite(ledcall, LOW); // Turn call LED OFF 
-        write_call_type_to_database(call_history); 
+        write_call_type_to_database(call_history);
+        //free_audio=false; 
         sleep(3);
+        //sleep(2);
         system("aplay -q /home/pi/No_response.wav");
         break;
 
@@ -330,6 +333,7 @@ void legacy_main()
         call_history=missed; //Appel en absence
         digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history);
+        break;
 
         case reject:
         press=0;
@@ -338,12 +342,25 @@ void legacy_main()
         digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history); 
         sleep(3);
+        //sleep(2);
         system("aplay -q /home/pi/Call_reject.wav");
-         
-        default:
+        break;
+
+        case not_found:
         press=0;
         call_status=idle;
+        digitalWrite(ledcall,LOW); // Turn call LED OFF 
+        printf("Not Found!!!\n");
+        //system("aplay -q /home/pi/Not_Found.wav");//Create a not_found received audio message
+        break;
+
+        case idle:
+        press=0;
+        break;        
+ 
+        default:
         digitalWrite(ledcall, LOW); // Turn call LED OFF
+        call_status=idle;
         //sleep(3);
         //system("aplay -q /home/pi/unavailable_service.wav");//Unavailable service 
         
@@ -358,17 +375,16 @@ void legacy_main()
            system("aplay -q /home/pi/Appel_en_cours.wav");
            digitalWrite(ledcall, HIGH); // Turn call LED ON
            save_call_history_to_database();//Write to data base
-           send_uart_data(door.data_to_serrure,sizeof(door.data_to_serrure));
 
            if (data_visio.call_direction==Unicall)
             {
-              printf("You are in Unicall module!!!\n");
+              //printf("You are in Unicall module!!!\n");
               index_client=0;
               ui_make_new_call();
              }
            if (data_visio.call_direction==Multicall)
             {
-              printf("You are in Multicall module!!!\n");
+              //printf("You are in Multicall module!!!\n");
               for(index_client=0;index_client<data_visio.client_number;index_client++)
               ui_make_new_call();
               usleep(200);
@@ -384,12 +400,9 @@ on_exit:
 
 void signal_handler_IO (int status)
  {     
-     // printf("Test1");
       byte_nbr=receive_uart_data(door.data_from_serrure,sizeof(door.data_from_serrure));
      /* if(byte_nbr==7)
       { 
-       printf("Test2");
        zigbee_handle();
-       printf("Test3");
       }*/
 }
