@@ -12,8 +12,6 @@
  ***************************************************************************/
 #ifndef _MCP9808_H_
 #define _MCP9808_H_
-
-
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <stdbool.h>

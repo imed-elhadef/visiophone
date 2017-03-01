@@ -24,7 +24,7 @@
 #include "pjsua_app_common.h"
 #include "visiophone.h"
 #include "database.h"
-#include "MCP9808.h" 
+#include "mcp9808.h" 
 #include <linux/watchdog.h>
 //------------Imed Variables--------------//
 static int byte_nbr=0;
@@ -310,8 +310,7 @@ void legacy_main()
         digitalWrite(ledcam, LOW); // Turn cam LED OFF
         digitalWrite(ledcommun, LOW); // Turn communication LED OFF
         write_call_type_to_database(call_history);
-        sleep(3);
-        //sleep(2); 
+        sleep(3); 
         system("aplay -q /home/pi/Call_end.wav");
         break;
 
@@ -323,7 +322,6 @@ void legacy_main()
         write_call_type_to_database(call_history);
         //free_audio=false; 
         sleep(3);
-        //sleep(2);
         system("aplay -q /home/pi/No_response.wav");
         break;
 
@@ -342,7 +340,6 @@ void legacy_main()
         digitalWrite(ledcall, LOW); // Turn call LED OFF 
         write_call_type_to_database(call_history); 
         sleep(3);
-        //sleep(2);
         system("aplay -q /home/pi/Call_reject.wav");
         break;
 
@@ -361,9 +358,6 @@ void legacy_main()
         default:
         digitalWrite(ledcall, LOW); // Turn call LED OFF
         call_status=idle;
-        //sleep(3);
-        //system("aplay -q /home/pi/unavailable_service.wav");//Unavailable service 
-        
         //printf("Nothing to do!!!\n");
       }
    
